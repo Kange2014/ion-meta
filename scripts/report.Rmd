@@ -1,0 +1,293 @@
+---
+title: "Metagenomics Next Generation Sequencing Report"
+author:
+    - "Ion Metagenomics"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+params:
+   rmd: "report.Rmd"
+output:
+  html_document:
+  highlight: tango
+  number_sections: no
+  theme: default
+  toc: yes
+  toc_depth: 3
+  toc_float:
+    collapsed: no
+    smooth_scroll: yes
+---
+
+```{r setup, echo=FALSE}
+
+# Set some basic options. You usually do not want your code, messages, 
+# warnings etc to show in your actual manuscript however for the first
+# run or two these will be set on.
+  
+knitr::opts_chunk$set(warning=TRUE,
+            message=TRUE,
+            echo=FALSE,
+            cache = TRUE,
+            tidy = FALSE, ## remove the auto-formatting
+            error=TRUE,
+            fig.cap='', dev="png")   
+
+```
+
+```{r load_packages, include=FALSE}
+#=================
+# Load packages (load all the packages here at the beginning)
+#=================
+library(pavian)
+library(dplyr)
+library(ggplot2)
+library(DT)
+library(Rsamtools)
+
+```
+
+### 1. Sample Summary {.tabset}
+
+```{r get_summary_report}
+
+# one report per sample
+report <- read_report(snakemake@input[[1]])
+report_summary <- summarize_report(report)
+## delete 4th, 5th and 6th columns: artifical_reads, unclassified_reads and microbial_reads
+report_summary <- report_summary[,-c(4,5,6)]
+report_summary_percent <- report_summary/as.numeric(report_summary[1])
+report_summary_percent <- signif(report_summary_percent,4)
+report_summary_percent[1,] <- paste0(round(100*report_summary_percent, 2), "%")
+report_summary_percent[1] <- report_summary[1]
+
+```
+
+#### Classification summary
+
+```{r}
+DT::datatable(report_summary_percent, rownames=FALSE,
+             options=list(dom = 't', scrollX = TRUE)
+             )
+```
+
+#### Raw read numbers
+
+```{r}
+DT::datatable(report_summary, rownames=FALSE,
+             options=list(dom = 't', scrollX = TRUE)
+             )
+```
+
+### 2. Classification Results Report
+
+``` {r classification}
+raw_classify_results <- read.table(snakemake@input[[3]],header=T,sep="\t",quote="")
+raw_classify_results <- raw_classify_results[,-6]
+
+### calculate coverage ###########################
+
+mapQ <- 0
+
+bam_file <- snakemake@input[[2]]
+bam_pileup <- pavian:::get_pileup(bam_file) ## min_mapq = 0, top_n = NULL, ...
+
+bam2 <- pavian:::get_bam2(bam_file)
+bam2_mapq <- bam2 %>% dplyr::filter(mapq >= mapQ)
+
+nreads <- tapply(bam2_mapq$qname, bam2_mapq$rname, function(x) length(unique(x)))
+#nreads[is.na(nreads)] <- 0
+nreads <- nreads[!is.na(nreads)]
+seq_lengths <- pavian:::get_seqlengths(bam_file)
+sum_count <- attr(bam_pileup,"sum_count")
+#sum_count[setdiff(names(seq_lengths),names(sum_count))] <- 0
+seq_lengths <-  seq_lengths[names(sum_count)]
+covered_bp <- attr(bam_pileup,"covered_bp")
+#covered_bp[setdiff(names(seq_lengths),names(covered_bp))] <- 0
+avg_mapq <- tapply(bam2_mapq$mapq, bam2_mapq$rname, mean)
+#avg_mapq[is.na(avg_mapq)] <- 0
+avg_mapq <- avg_mapq[!is.na(avg_mapq)]
+
+## map ids to names
+id2tax <- read.table(snakemake@input[[5]],header=T,sep="\t")
+id2tax <- id2tax[!duplicated(id2tax),]
+row.names(id2tax) <- id2tax[,1]
+taxid <- id2tax[names(seq_lengths),2]
+species_names <- id2tax[names(seq_lengths),3]
+genus_names <- id2tax[names(seq_lengths),4]
+family_names <- id2tax[names(seq_lengths),5]
+kingdom_names <- id2tax[names(seq_lengths),6]
+
+seq_info_df <- data.frame(seqnames=names(seq_lengths),
+                 taxid=taxid,
+                 species=species_names,
+                 genus=genus_names,
+                 family=family_names,
+                 kingdom=kingdom_names,
+                 genome_size=seq_lengths,
+                 avg_coverage=signif(sum_count[names(seq_lengths)]/seq_lengths,3),
+                 covered_bp=covered_bp[names(seq_lengths)],
+                 n_reads=nreads[names(seq_lengths)],
+                 avg_mapq=signif(avg_mapq[names(seq_lengths)],3))
+
+seq_info_df$perc_covered = 100*signif(seq_info_df$covered_bp / seq_info_df$genome_size,3)
+#seq_info_df <- seq_info_df[order(-seq_info_df$n_reads,-seq_info_df$perc_covered), , drop=F]
+
+##################################################
+### identify species detected with two conditions:
+###   1.  >= cutoff set mapped reads (e.g., 2000), or 
+###       >= cutoff set abundance (e.g.,1%) 
+###   2.  >= cutoff set genome covered (e.g.,10%)
+##################################################
+
+#seq_info_df <- seq_info_df[seq_info_df[,2] %in% raw_classify_results[,2], ]
+classfify_results <- raw_classify_results[raw_classify_results[,2] %in% seq_info_df[,2],]
+classify_results_new <- merge(classfify_results,seq_info_df,by.x="taxID",by.y="taxid")
+
+## for same taxid with multiple sequences, select the one with the highest percent coverage as a representative
+### first order the table by perc_covered
+classify_results_new <- classify_results_new[order(-classify_results_new$perc_covered),,drop=F]
+### then remove duplicate taxids
+classify_results_new <- classify_results_new[!duplicated(classify_results_new[,2]),]
+
+## do not show columns: taxRank,genomeSize,n_reads,species,avg_mapq,taxid
+classify_results_new$taxRank <- NULL
+classify_results_new$genomeSize <- NULL
+classify_results_new$n_reads <- NULL
+classify_results_new$species <- NULL
+classify_results_new$avg_mapq <- NULL
+classify_results_new$taxid <- NULL
+
+classify_results_new <- classify_results_new[classify_results_new$numReads >= 2000 | classify_results_new$abundance >= 0.01,]
+classify_results_new <- classify_results_new[classify_results_new$perc_covered >=0.1,]
+
+classify_results_new <- classify_results_new[order(-classify_results_new$abundance,-classify_results_new$numReads,-classify_results_new$perc_covered),,drop=F]
+#DT::datatable(seq_info_df)
+```
+
+##### VIRUSES:  
+
+```{r virus_results}
+
+if( any(classify_results_new$kingdom == "Viruses") ){
+    output <- classify_results_new[classify_results_new$kingdom == "Viruses",]
+    output$kingdom <- NULL
+    DT::datatable(output,rownames = FALSE, ## extensions = 'Buttons',
+              options = list(dom = 't', scrollX = TRUE)
+              )
+}else{
+    cat("    Not Detected","\n")
+}
+
+```
+
+##### BACTERIA:  
+
+```{r bacteria_results}
+if( any(classify_results_new$kingdom == "Bacteria") ){
+    output <- classify_results_new[classify_results_new$kingdom == "Bacteria",]
+    output$kingdom <- NULL
+    DT::datatable(output,rownames = FALSE, ## extensions = 'Buttons',
+              options = list(dom = 't', scrollX = TRUE)
+              )
+}else{
+    cat("    Not Detected","\n")
+}
+
+```
+
+#####  Archaea:  
+
+```{r archaea_results}
+if( any(classify_results_new$kingdom == "Archaea") ){
+    output <- classify_results_new[classify_results_new$kingdom == "Archaea",]
+    output$kingdom <- NULL
+    DT::datatable(output,rownames = FALSE, ## extensions = 'Buttons',
+              options = list(dom = 't', scrollX = TRUE)
+              )
+}else{
+    cat("    Not Detected","\n")
+}
+
+```
+
+##### Fungi & Protozoa:  
+
+```{r other_results}
+if( any(classify_results_new$kingdom == "Eukaryota") ){
+    output <- classify_results_new[classify_results_new$kingdom == "Eukaryota",]
+    output$kingdom <- NULL
+    DT::datatable(output,rownames = FALSE, ## extensions = 'Buttons',
+              options = list(dom = 't', scrollX = TRUE)
+              )
+}else{
+    cat("    Not Detected","\n")
+}
+
+```
+
+*Note: You could also see section 4 for more results.*
+
+### 3. Coverage View
+
+```{r plot_coverage,fig.width=10,fig.height=3.5}
+
+# plot genome coverage
+
+if( any(classify_results_new$kingdom == "Viruses") ){
+    output <- classify_results_new[classify_results_new$kingdom == "Viruses",]
+    cat("Detected Virus Coverage Plot","\n")
+    for( name in output$seqnames ){
+        plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,])
+        ## in a loop, use print to visibly display the plot
+        print( plot_pileup_act + ggtitle(paste0(name," | ", id2tax[id2tax[,1] == name,3])) + theme(plot.title = element_text(hjust = 0.5)) )
+    }
+}
+
+if( any(classify_results_new$kingdom == "Bacteria") ){
+    output <- classify_results_new[classify_results_new$kingdom == "Bacteria",]
+    cat("Detected Bacteria Coverage Plot","\n")
+    for( name in output$seqnames ){
+        plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,])
+        ## in a loop, use print to visibly display the plot
+        print( plot_pileup_act + ggtitle(paste0(name," | ", id2tax[id2tax[,1] == name,3])) + theme(plot.title = element_text(hjust = 0.5)) )
+    }
+}
+
+if( any(classify_results_new$kingdom == "Archaea") ){
+    output <- classify_results_new[classify_results_new$kingdom == "Archaea",]
+    cat("Detected Archaea Coverage Plot","\n")
+    for( name in output$seqnames ){
+        plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,])
+        ## in a loop, use print to visibly display the plot
+        print( plot_pileup_act + ggtitle(paste0(name," | ", id2tax[id2tax[,1] == name,3])) + theme(plot.title = element_text(hjust = 0.5)) )
+    }
+}
+
+if( any(classify_results_new$kingdom == "Eukaryota") ){
+    output <- classify_results_new[classify_results_new$kingdom == "Eukaryota",]
+    cat("Detected Fungi/Parasite Coverage Plot","\n")
+    for( name in output$seqnames ){
+        plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,])
+        ## in a loop, use print to visibly display the plot
+        print( plot_pileup_act + ggtitle(paste0(name," | ", id2tax[id2tax[,1] == name,3])) + theme(plot.title = element_text(hjust = 0.5)) )
+    }
+}
+
+
+    #plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,])
+    #plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,], seq_info_df[name,], text_size = 4)
+    
+    ## in a loop, use print to visibly display the plot
+    #print( plot_pileup_act + ggtitle(paste0(name," | ", id2tax[id2tax[,1] == name,3])) + theme(plot.title = element_text(hjust = 0.5)) )
+
+    #ggsave(paste0(snakemake@params[[1]],name,".cov.pdf"), plot_pileup_act + 
+    #                          ggtitle(name) + theme(plot.title = element_text(hjust = 0.5)),
+    #                          "pdf", height = 2.5, units = "in")
+
+```
+
+### 4. Krona Visualization of Raw Classification Results
+
+<a href="`r base64enc::dataURI(file = snakemake@input[[4]], mime = 'text/html')`" download="krona.report.html">Krona visualization directly by right clicking</a>
+
+### Source
+<a download="report.Rmd" href="`r base64enc::dataURI(file = params$rmd, mime = 'text/rmd', encoding = 'base64')`">R Markdown source file (to produce this document)</a>

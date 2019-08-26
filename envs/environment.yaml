@@ -1,0 +1,32 @@
+name: ion-meta
+
+channels:
+  - etetoolkit
+  - conda-forge
+  - biocore
+  - bioconda
+
+dependencies:
+  - python>=3.5
+  - snakemake>=4.4.0
+  - seqtk
+  - pandas
+  - bowtie2
+  - samtools
+  - diamond>=0.9.19
+  - biopython
+  - centrifuge
+  - ete3
+  - conda
+  - sourmash
+  - bedtools
+  - scikit-bio
+  - scikit-learn
+  - krona
+  - blast
+  - ruamel.yaml
+  - collections
+  - r>=3.4.0
+  - r-rmarkdown
+  - pandoc
+  

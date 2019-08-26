@@ -1,0 +1,70 @@
+# 
+# ion-meta configuration file
+#
+# Paths:
+#   Paths are resolved through the following rules:
+#     1. If the path is absolute, the path is parsed as-is
+#     2. If the path is not absolute, the path at 'workdir' is appended to it
+#     3. If the path is not 'output_fp', the path is checked to ensure it exists
+#
+#   Paths should not include trailing "/"
+#
+
+workdir: "{PROJECT_FP}"
+samplelist_fp: "samples.csv"
+paired_end: false
+
+data_path: data
+results_path: results
+scratch_path: temp
+report_path: results/report
+
+# taxonomy database path
+taxdb: /results/luze/ion-meta/resources
+
+######################
+### CLASSIFICATION ###
+######################
+# Path to where the classifier (Centrifuge) database will be stored. 
+# If possible, this should be on a fast disk. There are 3 files in it:
+#  1. centrifuge index database
+#  2. sequence data with fasta format (input-sequences.fna.gz)
+#  3. mapping file of seqids to taxids (seqid2taxid.map)
+centrifuge_dir: /results/luze/ion-meta/resources/classifier_db
+
+# Specify a custom built centrifuge index to use instead of the prebuilt
+# Exclude the '.*.cf' suffix
+centrifuge_base: bacteria.archaea.viral.fungi.protozoa.human
+
+# Maximum number of assignments per read
+# By default this is set to 5 in centrifuge, increase to show more specific assignments
+# Set to 1 to implement LCA-classification as in Kraken
+centrifuge_max_assignments: 1
+
+# Minimum score for classifications by centrifuge.
+# Because centrifuge doesn't have a filtering algorithm, we use this min_score to filter results.
+centrifuge_min_score: 75
+
+## Host taxid for filtering, e.g., humans: 9606
+host_taxid: 9606
+
+# Filtering of genomes
+# Set minimum read count required during the pre-filtering step to include a genome for downstream analysis
+# Note that this is not uniquely classified reads
+centrifuge_min_read_count: 2000
+centrifuge_min_abundance: 0.01
+
+# Fraction of kmer hashes to compute using sourmash
+# The number of hashes is 1 in <hash_fraction>
+# we use 1000 as sourmash suggested to speed up
+# https://sourmash.readthedocs.io/en/latest/using-sourmash-a-guide.html
+sourmash_fraction: 1000
+
+# Minimum coverage estimated from sourmash (0.1 corresponds to 10% of a genome covered by a sample)
+sourmash_min_cov: 0.1
+
+###############
+### MAPPING ###
+###############
+bowtie2_threads: 10
+bowtie2_params: "--very-sensitive"
