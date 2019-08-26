@@ -1,0 +1,16 @@
+#############################
+## BAM to FASTQ converting ##
+#############################
+
+rule bam_to_fastq:
+    input:
+        lambda wildcards: Samples[wildcards.sample]['1']
+    output:
+        opj(config["data_path"],"{sample}_se.fq")
+    resources:
+        runtime = lambda wildcards, attempt: attempt**2*60
+    message: "BAM to FASTQ converting on {wildcards.sample}"
+    shell:
+        """
+        samtools bam2fq {input} > {output}
+        """
