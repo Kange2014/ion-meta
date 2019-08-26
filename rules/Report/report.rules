@@ -1,5 +1,5 @@
 ##################################################
-## Generate HTML report of mNGS using Rmarkdown ##
+## Generate an HTML report of mNGS using Rmarkdown ##
 ##################################################
 
 rule generate_report:
