@@ -146,7 +146,7 @@ rule get_filtered_genome_seqs:
         genome_files = expand(opj(config["results_path"],"centrifuge","{sample}_se.filtered_genomes"), sample=Samples.keys()),
         fna = opj(config["centrifuge_dir"],"input-sequences.fna.gz")
     output:
-        fna = opj(config["results_path"],"centrifuge","filtered","genomes.fna")
+        fna = temp(opj(config["results_path"],"centrifuge","filtered","genomes.fna"))
     params:
         out_dir = opj(config["results_path"],"centrifuge","filtered"),
         seqids = temp(opj(config["results_path"],"centrifuge","filtered","seqids"))
