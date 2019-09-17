@@ -13,8 +13,8 @@ rule generate_report:
         opj(config["report_path"],"bowtie2","{sample}.report.html")
     params:
         prefix = opj(config["report_path"],"bowtie2")
-    conda:
-        "../../envs/report.yaml"
+    #conda:
+    #    "../../envs/report.yaml"
     resources:
         runtime = lambda wildcards, attempt: attempt**2*60
     ## it's important to ensure no \r newline character exists in Rmd file
