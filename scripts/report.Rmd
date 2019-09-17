@@ -42,7 +42,9 @@ library(dplyr)
 library(ggplot2)
 library(DT)
 library(Rsamtools)
-
+library(xfun)
+library(htmltools)
+library(base64enc)
 ```
 
 ### 1. Sample Summary {.tabset}
@@ -285,9 +287,19 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
 
 ```
 
-### 4. Krona Visualization of Raw Classification Results
+### 4. Raw Classification Results
 
-<a href="`r base64enc::dataURI(file = snakemake@input[[4]], mime = 'text/html')`" download="krona.report.html">Krona visualization directly by right clicking</a>
+```{r download_raw_data}
+    #' define an embed_files function: first zip files, and then embed it
+    
+    embed_files = function(path, name = with_ext(basename(path[1]), '.zip'), ...) {
+      name = file.path(tempdir(), basename(name))
+      on.exit(file.remove(name), add = TRUE)
+      zip(name, path, zip="zip")
+      xfun::embed_file(name, ...)
+    }
+    embed_files(c(snakemake@input[[3]],snakemake@input[[4]]),name="raw_classify_results.zip")
+```
 
 ### Source
 <a download="report.Rmd" href="`r base64enc::dataURI(file = params$rmd, mime = 'text/rmd', encoding = 'base64')`">R Markdown source file (to produce this document)</a>
