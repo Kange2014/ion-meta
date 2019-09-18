@@ -26,8 +26,11 @@ taxdb: /results/luze/ion-meta/resources
 ### CLASSIFICATION ###
 ######################
 # Path to where the classifier (Centrifuge) database will be stored. 
-# If possible, this should be on a fast disk. There are 3 files in it:
+# If possible, this should be on a fast disk. There's at least 1 file in it:
 #  1. centrifuge index database
+# 
+# If below two files are not provided, the workflow will generate them from 
+# the above file for the first time:
 #  2. sequence data with fasta format (input-sequences.fna.gz)
 #  3. mapping file of seqids to taxids (seqid2taxid.map)
 centrifuge_dir: /results/luze/ion-meta/resources/classifier_db
