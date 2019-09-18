@@ -1,9 +1,94 @@
 localrules:
+    download_taxdump,
+    krona_taxonomy,
+    extract_centrifuge_sequences,
+    extract_centrifuge_seqidmap,
     centrifuge2krona,
     centrifuge_kreport,
     all_centrifuge_to_krona,
     centrifuge_filter
 
+#####################################
+## Prepare taxonomy database files ##
+#####################################
+
+rule download_taxdump:
+    output:
+        nodes = opj(config["taxdb"],"taxonomy","nodes.dmp"),
+        names = opj(config["taxdb"],"taxonomy","names.dmp"),
+        tar = opj(config["taxdb"],"taxonomy","taxdump.tar.gz")
+    params:
+        taxdir = opj(config["taxdb"], "taxonomy")
+    shadow: "minimal"
+    shell:
+        """
+        curl -o {output.tar} ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+        tar -xf {output.tar} -C {params.taxdir}
+        touch {output.tar}
+        """
+
+rule krona_taxonomy:
+    input:
+        opj(config["taxdb"],"taxonomy","taxdump.tar.gz"),
+        opj(config["taxdb"],"taxonomy","nodes.dmp"),
+        opj(config["taxdb"],"taxonomy","names.dmp")
+    output:
+        opj(config["taxdb"],"krona","taxonomy.tab")
+    params:
+        taxdir = opj(config["taxdb"],"taxonomy")
+    shell:
+        """
+        ktUpdateTaxonomy.sh --only-build --preserve {params.taxdir}
+        mv {params.taxdir}/taxonomy.tab {output}
+        touch {output}
+        """
+
+rule sqlite_taxdb:
+    """Creates a sqlite database for ete3 in the centrifuge path"""
+    output:
+        opj(config["taxdb"],"taxonomy","taxdb.sqlite"),
+        opj(config["taxdb"],"taxonomy","taxdb.sqlite.traverse.pkl")
+    message: "Creating ete3 sqlite taxonomy database in {output[0]}"
+    shadow: "minimal"
+    run:
+        from ete3 import NCBITaxa
+        shell("touch {output[0]}")
+        ncbi_taxa = NCBITaxa(output[0])
+
+#################################################
+## Centrifuge database sequences and seqid2map ##
+#################################################
+
+rule extract_centrifuge_sequences:
+    """Extracts input sequences from centrifuge database"""
+    input:
+        db = expand(opj(config["centrifuge_dir"], "{base}.{i}.cf"),
+            i=[1,2,3], base=config['centrifuge_base'])
+    output:
+        fna = opj(config["centrifuge_dir"], "input-sequences.fna.gz")
+    params:
+        prefix = opj(config["centrifuge_dir"], "{base}".format(base=config["centrifuge_base"]))
+    run:
+        unzipped = (output.fna).replace(".gz", "")
+        if os.path.exists(output.fna):
+            pass
+        elif os.path.exists(unzipped):
+            shell("gzip -c {unzipped} > {output.fna}")
+        else:
+            shell("centrifuge-inspect {params.prefix} | gzip -c > {output.fna}")
+
+rule extract_centrifuge_seqidmap:
+    """Extracts sequence id to taxonomy idmapping from centrifuge database"""
+    input:
+        db = expand(opj(config["centrifuge_dir"], "{base}.{i}.cf"), i=[1,2,3], base=config["centrifuge_base"])
+    output:
+        map = opj(config["centrifuge_dir"], "seqid2taxid.map")
+    params:
+        prefix = opj(config["centrifuge_dir"], "{base}".format(base=config["centrifuge_base"]))
+    run:
+        if not os.path.exists(output.map):
+            shell(" centrifuge-inspect --conversion-table {params.prefix} > {output.map} ")
+        
 
 ############################
 ## Centrifuge classifying ##
@@ -109,18 +194,6 @@ rule all_centrifuge_to_krona:
 ## Filter out genome sequences using Centrifuge ##
 ##################################################
 
-rule centrifuge_sqlite_taxdb:
-    """Creates a sqlite database for ete3 in the centrifuge path"""
-    output:
-        opj(config["taxdb"],"taxonomy","taxdb.sqlite"),
-        opj(config["taxdb"],"taxonomy","taxdb.sqlite.traverse.pkl")
-    message: "Creating ete3 sqlite taxonomy database in {output[0]}"
-    shadow: "minimal"
-    run:
-        from ete3 import NCBITaxa
-        shell("touch {output[0]}")
-        ncbi_taxa = NCBITaxa(output[0])
-
 rule centrifuge_filter:
     """Filter genomes by centrifuge read counts or abundance"""
     input:
@@ -132,13 +205,9 @@ rule centrifuge_filter:
     params:
         min_read_count = int(config["centrifuge_min_read_count"]),
         min_abundance = float(config["centrifuge_min_abundance"]),
-        script = "../../scripts/centrifuge_filter_genomes.py",
         host_taxid = str(config["host_taxid"])
-    shell:
-        """
-        python {params.script} -i {input[0]} -d {input[1]} -M {input[2]} -r {params.min_read_count} \
-                               -a {params.min_abundance} -t {params.host_taxid} -o {output[0]}
-        """
+    script:
+        "../../scripts/centrifuge_filter_genomes.py"
 
 rule get_filtered_genome_seqs:
     """Extracts nucleotide fasta files for the filtered genomes"""
