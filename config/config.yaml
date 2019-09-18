@@ -58,6 +58,9 @@ centrifuge_min_abundance: 0.01
 # The number of hashes is 1 in <hash_fraction>
 # we use 1000 as sourmash suggested to speed up
 # https://sourmash.readthedocs.io/en/latest/using-sourmash-a-guide.html
+#
+# However, if the number of reads is less, eg < 1000000, pls. set it to 100
+#
 sourmash_fraction: 1000
 
 # Minimum coverage estimated from sourmash (0.1 corresponds to 10% of a genome covered by a sample)
