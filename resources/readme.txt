@@ -1,1 +1,1 @@
-This filefolder is used to keep taxonomy databases for analysis.
+For the first time, the workflow will download taxonomy related databases files like taxdum.tar.gz, taxdb.sqlite, taxdb.sqlite.traverse.pkl from NCBI and keep them in this filefolder for later analysis, if not provided.
