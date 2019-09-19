@@ -1,0 +1,1 @@
+This filefolder is used to keep taxonomy databases for analysis.
