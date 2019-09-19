@@ -300,6 +300,3 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
     }
     embed_files(c(snakemake@input[[3]],snakemake@input[[4]]),name="raw_classify_results.zip")
 ```
-
-### Source
-<a download="report.Rmd" href="`r base64enc::dataURI(file = params$rmd, mime = 'text/rmd', encoding = 'base64')`">R Markdown source file (to produce this document)</a>
