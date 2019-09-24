@@ -1,7 +1,7 @@
 # ion-meta
 A workflow using snakemake to analyze ion torrent based metagenomics data
 
-## Usage
+## Usage Simple
 #### Step 1: Install conda
 First, you have to install the Miniconda Python3 distribution. See here (https://docs.conda.io/en/latest/miniconda.html#installing) for installation instructions. 
 
@@ -15,7 +15,7 @@ First, you have to install the Miniconda Python3 distribution. See here (https:/
     conda config --add envs_dirs $(pwd)/envs/
     conda activate envs/ion-meta
 
-Open R, and install R package pavian and Rsamtolls for reporting
+Open R, and install R package pavian and Rsamtools for reporting
 
     > if (!require(remotes)) { install.packages("remotes") }
     > remotes::install_github("fbreitwieser/pavian")
