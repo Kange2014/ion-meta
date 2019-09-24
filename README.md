@@ -28,9 +28,10 @@ Initiate and Configure the workflow according to your needs via editing the file
     python scripts/init.py --data_fp /path/to/bam/files /path/to/my_project --single_end --format {sample}.bam
 
 In the generated directory, a new config file and a new sample list were created (by default named config.yaml and samplelist.csv, respectively). Edit the config file in your favorite text editor, in particular for below to ensure they match your case:
-  taxdb: /results/luze/ion-meta/resources
-  centrifuge_dir: /results/luze/ion-meta/resources/classifier_db
-  centrifuge_base: bacteria.archaea.viral.fungi.protozoa.human
+
+    taxdb: /results/luze/ion-meta/resources
+    centrifuge_dir: /results/luze/ion-meta/resources/classifier_db
+    centrifuge_base: bacteria.archaea.viral.fungi.protozoa.human
 
 #### Step 5: Execute workflow
 Test your configuration by performing a run via
