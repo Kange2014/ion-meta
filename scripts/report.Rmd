@@ -295,7 +295,7 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
     embed_files = function(path, name = with_ext(basename(path[1]), '.zip'), ...) {
       name = file.path(tempdir(), basename(name))
       on.exit(file.remove(name), add = TRUE)
-      zip(name, path, zip="zip")
+      zip(name, path, zip="zip",flags="-rj9X")
       xfun::embed_file(name, ...)
     }
     embed_files(c(snakemake@input[[3]],snakemake@input[[4]]),name="raw_classify_results.zip")
