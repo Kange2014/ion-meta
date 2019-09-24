@@ -3,7 +3,7 @@ A workflow using snakemake to analyze ion torrent based metagenomics data
 
 ## Usage Simple
 #### Step 1: Install conda
-First, you have to install the Miniconda Python3 distribution. See here (https://docs.conda.io/en/latest/miniconda.html#installing) for installation instructions. 
+First, you have to install the Miniconda Python3 distribution. See [here] (https://docs.conda.io/en/latest/miniconda.html#installing) for installation instructions. 
 
 #### Step 2: Clone the repository of ion-meta
     git clone https://github.com/Kange2014/ion-meta
