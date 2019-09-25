@@ -98,7 +98,12 @@ rule sourmash_filter:
         ncbi = NCBITaxa(input[2])
 
         df = pd.read_csv(input[0])
-        df = df.loc[df.f_match>=params.min_cov]
+        temp = df.loc[df.f_match>=params.min_cov]
+
+        # if no genomes meet coverage requirement, then all candidate genomes are used for mapping
+        if temp.empty: pass
+        else: df = temp
+
         ids = list(set([x.split(" ")[0] for x in df.name]))
 
         seqid2taxid = pd.read_csv(input[3], sep="\t")
@@ -111,6 +116,10 @@ rule sourmash_filter:
         for taxid in taxids:
             lineage = ncbi.get_lineage(taxid)
             ranks = ncbi.get_rank(lineage)
+
+            genus_name = ""
+            family_name = ""
+            kingdom_name = ""
             for key, value in ranks.items():
                 if(value == "genus"): genus_name = ncbi.get_taxid_translator([key]).get(key)
                 if(value == "family"): family_name = ncbi.get_taxid_translator([key]).get(key)
