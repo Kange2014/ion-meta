@@ -300,3 +300,7 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
     }
     embed_files(c(snakemake@input[[3]],snakemake@input[[4]]),name="raw_classify_results.zip")
 ```
+
+### About
+This is for research use only. It is not intended for any animal or human therapeutic or diagnostic use.
+
