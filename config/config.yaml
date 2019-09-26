@@ -52,6 +52,7 @@ centrifuge_min_score: 75
 host_taxid: 9606
 
 # Filtering of genomes
+# Note: there is a hidden condition that all identified species shall have >= 3 unique reads
 # Set minimum read count required during the pre-filtering step to include a genome for downstream analysis
 # Note that this is uniquely classified reads
 centrifuge_min_read_count: 2000
