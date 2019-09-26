@@ -67,11 +67,6 @@ Samples = load_sample_list(config['samplelist_fp'], config['paired_end'])
 
 #Pairs = ['1', '2'] if config['paired_end'] else ['1']
 
-##########################################
-##  init: to create a new config file 
-##        and sample list for a project ##
-##########################################
-
 # ---- Targets rules
 
 rule all:
