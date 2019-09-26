@@ -23,6 +23,7 @@ def get_seqids(df, seqid2taxid, ncbitaxa, host_taxid):
 def filter_genomes(input,db,mapfile,min_read_count,min_abundance,host_taxid,output):
     df = pd.read_csv(input, sep="\t")
     # Filter to number of reads
+    df = df.loc[df.numReads >= 3] # for each classification, at least 3 different reads
     df = df.loc[(df.numReads >= min_read_count) | (df.abundance >= min_abundance)]
     # Filter to ranks genus, species and leaf
     df = df.loc[df.taxRank.isin(["leaf", "species", "genus"])]

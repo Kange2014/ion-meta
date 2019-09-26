@@ -1,5 +1,4 @@
 localrules:
-    download_taxdump,
     krona_taxonomy,
     extract_centrifuge_sequences,
     extract_centrifuge_seqidmap,
@@ -12,30 +11,12 @@ localrules:
 ## Prepare taxonomy database files ##
 #####################################
 
-rule download_taxdump:
-    output:
-        nodes = opj(config["taxdb"],"taxonomy","nodes.dmp"),
-        names = opj(config["taxdb"],"taxonomy","names.dmp"),
-        tar = opj(config["taxdb"],"taxonomy","taxdump.tar.gz")
-    params:
-        taxdir = opj(config["taxdb"], "taxonomy")
-    shadow: "minimal"
-    shell:
-        """
-        curl -o {output.tar} ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
-        tar -xf {output.tar} -C {params.taxdir}
-        touch {output.tar}
-        """
-
 rule krona_taxonomy:
-    input:
-        opj(config["taxdb"],"taxonomy","taxdump.tar.gz"),
-        opj(config["taxdb"],"taxonomy","nodes.dmp"),
-        opj(config["taxdb"],"taxonomy","names.dmp")
     output:
         opj(config["taxdb"],"krona","taxonomy.tab")
     params:
         taxdir = opj(config["taxdb"],"taxonomy")
+    shadow: "minimal"
     shell:
         """
         ktUpdateTaxonomy.sh --only-build --preserve {params.taxdir}
@@ -209,8 +190,8 @@ rule centrifuge_filter:
     script:
         "../../scripts/centrifuge_filter_genomes.py"
 
-rule get_filtered_genome_seqs:
-    """Extracts nucleotide fasta files for the filtered genomes"""
+rule get_all_filtered_genomes:
+    """Extracts nucleotide fasta files of the filtered genomes for all samples"""
     input:
         genome_files = expand(opj(config["results_path"],"centrifuge","{sample}_se.filtered_genomes"), sample=Samples.keys()),
         fna = opj(config["centrifuge_dir"],"input-sequences.fna.gz")
@@ -236,3 +217,30 @@ rule get_filtered_genome_seqs:
         shell("seqtk subseq {input.fna} {params.seqids} > {output.fna}")
         #df.to_csv(output.tab, sep="\t", index=False, header=True)
         #shell("rm {params.seqids}")
+
+rule get_filtered_genomes:
+    """Extracts nucleotide fasta files of the filtered genomes for each sample"""
+    input:
+        opj(config["results_path"],"centrifuge","filtered","genomes.fna"),
+        opj(config["results_path"],"centrifuge","{sample}_se.filtered_genomes")
+    output:
+        fna = opj(config["results_path"],"centrifuge","filtered","{sample}_se.genomes.fna")
+    params:
+        seqids = temp(opj(config["results_path"],"centrifuge","filtered","{sample}_se.seqids")),
+        in_dir = opj(config["results_path"],"centrifuge","filtered")
+    resources:
+        runtime = lambda wildcards, attempt: attempt**2*60*2
+    run:
+        df = pd.DataFrame()
+        _df = pd.read_csv(input[1], sep="\t")
+        df = pd.concat([df,_df], sort=True)
+        # Make unique by seqid
+        df = df.groupby("seq").first().reset_index()
+        # Write seqids to file
+        with open(params.seqids, 'w') as fhout:
+            for seqid in df.seq:
+                fhout.write("{}\n".format(seqid))
+
+        # Extract sequences to individual sample
+        shell("seqtk subseq {input[0]} {params.seqids} > {output.fna}")
+        

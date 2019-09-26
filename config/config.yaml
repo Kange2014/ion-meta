@@ -57,14 +57,20 @@ host_taxid: 9606
 centrifuge_min_read_count: 2000
 centrifuge_min_abundance: 0.01
 
-# Fraction of kmer hashes to compute using sourmash
+# Number of reads to define fraction of kmer hashes to compute using sourmash
+#
 # The number of hashes is 1 in <hash_fraction>
-# we use 1000 as sourmash suggested to speed up
+#
+# By default this is set to 1000000, then we define this fraction to 100, 
+# meaning that 1/100 of the input k-mer are used to compute the MinHash signature. 
+#
+# However, if the number of reads is very large, eg > 1000000, the computation is very slow,
+# thus we use 1000 as sourmash suggested to speed up
 # https://sourmash.readthedocs.io/en/latest/using-sourmash-a-guide.html
 #
-# However, if the number of reads is less, eg < 1000000, pls. set it to 100
+# Increasing the setting will reduce the disk-space requirements but may also reduce performance.
 #
-sourmash_fraction: 1000
+sourmash_fraction_num_reads: 500000
 
 # Minimum coverage estimated from sourmash (0.1 corresponds to 10% of a genome covered by a sample)
 sourmash_min_cov: 0.1
