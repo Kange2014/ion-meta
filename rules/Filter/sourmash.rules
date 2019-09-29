@@ -15,7 +15,7 @@ rule define_sourmash_hash_fraction:
             pass
         count += 1
     
-        if count >= int(config["sourmash_fraction_num_reads"]):
+        if count >= int(config["sourmash_fraction_num_reads"])*4:
             sourmash_fraction = 1000
         else:
             sourmash_fraction = 100
