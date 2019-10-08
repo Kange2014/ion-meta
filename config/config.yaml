@@ -62,10 +62,10 @@ centrifuge_min_abundance: 0.01
 #
 # The number of hashes is 1 in <hash_fraction>
 #
-# By default this is set to 1000000, then we define this fraction to 100, 
+# By default this is set to 500000, then we define this fraction to 100, 
 # meaning that 1/100 of the input k-mer are used to compute the MinHash signature. 
 #
-# However, if the number of reads is very large, eg > 1000000, the computation is very slow,
+# However, if the number of reads is very large, eg > 500000, the computation is very slow,
 # thus we use 1000 as sourmash suggested to speed up
 # https://sourmash.readthedocs.io/en/latest/using-sourmash-a-guide.html
 #
