@@ -274,17 +274,6 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
     }
 }
 
-
-    #plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,])
-    #plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,], seq_info_df[name,], text_size = 4)
-    
-    ## in a loop, use print to visibly display the plot
-    #print( plot_pileup_act + ggtitle(paste0(name," | ", id2tax[id2tax[,1] == name,3])) + theme(plot.title = element_text(hjust = 0.5)) )
-
-    #ggsave(paste0(snakemake@params[[1]],name,".cov.pdf"), plot_pileup_act + 
-    #                          ggtitle(name) + theme(plot.title = element_text(hjust = 0.5)),
-    #                          "pdf", height = 2.5, units = "in")
-
 ```
 
 ### 4. Raw Classification Results
