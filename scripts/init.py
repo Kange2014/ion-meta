@@ -48,7 +48,7 @@ def build_sample_list(data_fp, format_str, output_file, is_single_end):
     fnames = [f.name for f in data_fp.iterdir() if f.is_file()]
 
     if not format_str:
-        format_str = "IonXpress_{sample}.bam"
+        format_str = "{sample}.bam"
 
     samples = find_samples(data_fp, format_str)
 
