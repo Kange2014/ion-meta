@@ -73,22 +73,6 @@ rule sourmash_coverage:
         sourmash gather --threshold-bp 100 -o {output[0]} -k 31 {input.sample} {input.genome}
         """
 
-#rule collate_sourmash:
-#    """Collate all sourmash coverage files"""
-#    input:
-#        expand(opj(config["results_path"],"sourmash","{sample}_se.csv"),sample=Samples.keys())
-#    output:
-#        opj(config["results_path"],"centrifuge","filtered","sourmash.csv")
-#    run:
-#        df = pd.DataFrame()
-#        for f in input:
-#            sample_run = os.path.basename(f).rstrip(".csv")
-#            _df = pd.read_csv(f, header=0)
-#            _df = _df.assign(sample=pd.Series([sample_run]*len(_df)))
-#            df = pd.concat([df,_df])
-#        df.set_index("sample")
-#        df.to_csv(output[0], index=True, header=True)
-
 rule sourmash_filter:
     """Reads results from sourmash and outputs a fasta file with genomes reaching a certain coverage threshold"""
     input:
