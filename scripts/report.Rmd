@@ -170,9 +170,6 @@ if (info$size == 0){
     classify_results_new$avg_mapq <- NULL
     classify_results_new$taxid <- NULL
 
-    #classify_results_new <- classify_results_new[classify_results_new$numReads >= 2000 | classify_results_new$abundance >= 0.01,]
-    #classify_results_new <- classify_results_new[classify_results_new$perc_covered >= 0.1,]
-
     classify_results_new <- classify_results_new[order(-classify_results_new$abundance,-classify_results_new$numReads,-classify_results_new$perc_covered),,drop=F]
     colnames(classify_results_new)[colnames(classify_results_new) == 'seqnames'] = 'seqID'
     #DT::datatable(seq_info_df)
@@ -291,16 +288,6 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
 }
 
 
-    #plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,])
-    #plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,], seq_info_df[name,], text_size = 4)
-    
-    ## in a loop, use print to visibly display the plot
-    #print( plot_pileup_act + ggtitle(paste0(name," | ", id2tax[id2tax[,1] == name,3])) + theme(plot.title = element_text(hjust = 0.5)) )
-
-    #ggsave(paste0(snakemake@params[[1]],name,".cov.pdf"), plot_pileup_act + 
-    #                          ggtitle(name) + theme(plot.title = element_text(hjust = 0.5)),
-    #                          "pdf", height = 2.5, units = "in")
-
 ```
 
 ### 4. Raw Classification Results
@@ -320,6 +307,3 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
 ### About
 This is for research use only. It is not intended for any animal or human therapeutic or diagnostic use. 
 
-
-### Source
-<a download="report.Rmd" href="`r base64enc::dataURI(file = params$rmd, mime = 'text/rmd', encoding = 'base64')`">R Markdown source file (to produce this document)</a>
