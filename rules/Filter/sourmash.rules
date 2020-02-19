@@ -108,19 +108,19 @@ rule sourmash_filter:
         ncbi = NCBITaxa(input[2])
 
         df = pd.read_csv(input[0])
-        temp = df.loc[df.f_match>=params.min_cov]
+        temp = df.loc[df.f_match >= params.min_cov]
         
         seqid2taxid = pd.read_csv(input[3], sep="\t")
         # Make unique by seqid
         seqid2taxid = seqid2taxid.groupby("seq").first().reset_index()
 
-        # if no genomes meet coverage requirement, then all candidate genomes are used for mapping
+        # if no genomes meet the coverage requirement, 
+        # then keep the one with max coverage for mapping
         if temp.empty:
-            pass
+            ids = [df.name[df.f_match.idxmax()].split(" ")[0]]
+            
         else: 
-            df = temp
-        
-        ids = list(set([x.split(" ")[0] for x in df.name]))
+            ids = list(set([x.split(" ")[0] for x in temp.name]))
         
         taxids = seqid2taxid.loc[seqid2taxid['seq'].isin(ids)].taxID
         taxids = list(set(taxids))

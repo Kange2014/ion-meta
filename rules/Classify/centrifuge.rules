@@ -171,9 +171,12 @@ rule all_centrifuge_to_krona:
         shell("ktImportTaxonomy -t 5 -m 3 -tax {params.tax} -o {output[0]} {input_string}")
 
 
-##################################################
-## Filter out genome sequences using Centrifuge ##
-##################################################
+###########################################################
+## Filter out genome sequences based on defined cutoffs, ##
+## e.g., min_read_count,min_abundance; otherwise, keep   ##
+## only the most abundant one and non-host one with      ##
+## most reads                                            ##
+###########################################################
 
 rule centrifuge_filter:
     """Filter genomes by centrifuge read counts or abundance"""
@@ -204,19 +207,31 @@ rule get_all_filtered_genomes:
         shell("mkdir -p {params.out_dir}")
         df = pd.DataFrame()
         for f in input.genome_files:
-            _df = pd.read_csv(f, sep="\t")
-            df = pd.concat([df,_df], sort=True)
-            # Make unique by seqid
-            df = df.groupby("seq").first().reset_index()
-            # Write seqids to file
-            with open(params.seqids, 'w') as fhout:
-                for seqid in df.seq:
-                    fhout.write("{}\n".format(seqid))
+
+            # when no candidate species passes the above filtering process,
+            # an empty {sample}_se.filtered_genomes will be generated with file size of 12 (only rownames),
+            # then we skip it
+        
+            if os.stat(f).st_size == 12:
+                pass
+                
+            else:
+                _df = pd.read_csv(f, sep="\t")
+                df = pd.concat([df,_df], sort=True)
+                # Make unique by seqid
+                df = df.groupby("seq").first().reset_index()
+                # Write seqids to file
+                with open(params.seqids, 'w') as fhout:
+                    for seqid in df.seq:
+                        fhout.write("{}\n".format(seqid))
 
         # Extract sequences
-        shell("seqtk subseq {input.fna} {params.seqids} > {output.fna}")
-        #df.to_csv(output.tab, sep="\t", index=False, header=True)
-        #shell("rm {params.seqids}")
+        if os.path.exists(params.seqids):
+            shell("seqtk subseq {input.fna} {params.seqids} > {output.fna}")
+            #df.to_csv(output.tab, sep="\t", index=False, header=True)
+            shell("rm {params.seqids}")
+        else:
+            open(output.fna,'a').close()
 
 rule get_filtered_genomes:
     """Extracts nucleotide fasta files of the filtered genomes for each sample"""
@@ -226,21 +241,32 @@ rule get_filtered_genomes:
     output:
         fna = opj(config["results_path"],"centrifuge","filtered","{sample}_se.genomes.fna")
     params:
-        seqids = temp(opj(config["results_path"],"centrifuge","filtered","{sample}_se.seqids")),
-        in_dir = opj(config["results_path"],"centrifuge","filtered")
+        seqids = temp(opj(config["results_path"],"centrifuge","filtered","{sample}_se.seqids"))
     resources:
         runtime = lambda wildcards, attempt: attempt**2*60*2
     run:
-        df = pd.DataFrame()
-        _df = pd.read_csv(input[1], sep="\t")
-        df = pd.concat([df,_df], sort=True)
-        # Make unique by seqid
-        df = df.groupby("seq").first().reset_index()
-        # Write seqids to file
-        with open(params.seqids, 'w') as fhout:
-            for seqid in df.seq:
-                fhout.write("{}\n".format(seqid))
+        # when no candidate species passes the above filtering process,
+        # an empty {sample}_se.filtered_genomes will be generated with file size of 12 (only rownames).
+        # we remove this file and exit the program to the system.
+        if os.path.getsize(input[1]) == 12: ## | os.path.getsize(input[0]) == 0:
+            #basedir = os.path.dirname(params.bam)
+            #if not os.path.exists(basedir):
+            #    os.makedirs(basedir)
+            #open(params.bam,'a').close()
 
-        # Extract sequences to individual sample
-        shell("seqtk subseq {input[0]} {params.seqids} > {output.fna}")
-        
+            print("No genomes were found on " + input[1] + ". Pls. set less stringent parameters.\n")
+            os.remove(input[1])
+            sys.exit(0)
+        else:
+            df = pd.DataFrame()
+            _df = pd.read_csv(input[1], sep="\t")
+            df = pd.concat([df,_df], sort=True)
+            # Make unique by seqid
+            df = df.groupby("seq").first().reset_index()
+            # Write seqids to file
+            with open(params.seqids, 'w') as fhout:
+                for seqid in df.seq:
+                    fhout.write("{}\n".format(seqid))
+
+            # Extract sequences to individual sample
+            shell("seqtk subseq {input[0]} {params.seqids} > {output.fna}")
