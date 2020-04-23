@@ -83,6 +83,12 @@ DT::datatable(report_summary, rownames=FALSE,
 
 ``` {r classification}
 raw_classify_results <- read.table(snakemake@input[[3]],header=T,sep="\t",quote="",comment.char="")
+
+### order the table by abundance for final output
+order_classify_results <- raw_classify_results[order(-raw_classify_results$abundance),,drop=F]
+fn_order_classify_results <- gsub(".tsv",".xls",snakemake@input[[3]])
+write.table(order_classify_results,file=fn_order_classify_results,sep="\t",row.names=FALSE)
+
 raw_classify_results <- raw_classify_results[,-6]
 
 ### calculate coverage ###########################
@@ -295,13 +301,13 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
 ```{r download_raw_data}
     #' define an embed_files function: first zip files, and then embed it
     
-    embed_files = function(path, name = with_ext(gsub("_se.report.tsv","",basename(path[1])), 'RawClassifyResults.zip'), ...) {
+    embed_files = function(path, name = with_ext(gsub("_se.report.xls","",basename(path[1])), 'RawClassifyResults.zip'), ...) {
       name = file.path(tempdir(), basename(name))
       on.exit(file.remove(name), add = TRUE)
       zip(name, path, zip="zip",flags="-rj9X")
       xfun::embed_file(name, ...)
     }
-    embed_files(c(snakemake@input[[3]],snakemake@input[[4]]))
+    embed_files(c(fn_order_classify_results,snakemake@input[[4]]))
 ```
 
 ### About
