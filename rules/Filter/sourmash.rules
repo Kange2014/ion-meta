@@ -95,7 +95,7 @@ rule sourmash_filter:
         opj(config["results_path"],"centrifuge","filtered","{sample}_se.genomes.filtered.ids.tax"),
         temp(opj(config["results_path"],"centrifuge","filtered","{sample}_se.genomes.filtered.ids"))
     params:
-        min_cov = config["sourmash_min_cov"]
+        min_cov = float(config["sourmash_min_cov"])
     run:
         from ete3 import NCBITaxa
         ncbi = NCBITaxa(input[2])
