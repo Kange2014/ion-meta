@@ -90,5 +90,8 @@ include: "rules/Filter/sourmash.rules"
 # ---- Map rules
 include: "rules/Map/bowtie2.rules"
 
+# ---- AnnotateARG rules
+include: "rules/AnnotateARG/AnnotateARG.rules"
+
 # ---- Report rules
 include: "rules/Report/report.rules"
