@@ -66,6 +66,8 @@ In the generated directory, a new config file and a new sample list were created
     centrifuge_dir: /results/luze/ion-meta/resources/classifier_db
     centrifuge_base: bacteria.archaea.viral.fungi.protozoa.human
 
+You could also edit the config.yaml directly in the config folder to match your case.
+
 #### Step 5: Execute workflow
 Test your configuration by performing a run via
     
