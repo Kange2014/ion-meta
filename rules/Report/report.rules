@@ -6,13 +6,22 @@ rule generate_report:
     input:
         opj(config["results_path"],"centrifuge","{sample}_se.report"),
         opj(config["report_path"],"bowtie2","{sample}_se.bam"),
-        opj(config["results_path"],"centrifuge","{sample}_se.report.tsv"),
+        opj(config["results_path"],"centrifuge","{sample}_se.report.taxLineage.tsv"),
         opj(config["results_path"],"centrifuge","{sample}_se.krona.html"),
-        opj(config["results_path"],"centrifuge","filtered","{sample}_se.genomes.filtered.ids.tax")
+        opj(config["results_path"],"centrifuge","filtered","{sample}_se.genomes.filtered.ids.tax"),
+        opj(config["results_path"],"assembly","{sample}_se","assembly.stat.txt"),
+        opj(config["results_path"],"deeparg","{sample}_se.deeparg.tab"),
+        opj(config["results_path"],"deeparg","{sample}_se.deeparg.png")
     output:
         opj(config["report_path"],"bowtie2","{sample}.report.html")
     params:
-        prefix = opj(config["report_path"],"bowtie2")
+        prefix = opj(config["report_path"],"bowtie2"),
+        min_mapped_regions = int(config["min_mapped_regions"]),
+        min_mapQ = int(config["min_mapQ"]),
+        virus_hostdb = opj(config["taxdb"],"virushostdb.tsv"),
+        genomeinfo = opj(config["taxdb"],"kegg_genomeinfo.tsv"),
+        virus_moh = opj(config["taxdb"],"Virus_MoH2006.descendants.tsv"),
+        bac_fungi_moh = opj(config["taxdb"],"Bac_Fungi_MoH2006.descendants.tsv")
     ##conda:
     #    "../../envs/report.yaml"
     resources:

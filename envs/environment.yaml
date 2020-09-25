@@ -27,5 +27,13 @@ dependencies:
   - ruamel.yaml
   - r>=3.4.0
   - r-rmarkdown
+  - r-openxlsx
   - pandoc
+  - mummer
+  - jellyfish
+  - spades
+  - megahit
+  - r-kableextra
+  - matplotlib
+  - click
   

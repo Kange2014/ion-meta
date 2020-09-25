@@ -1,0 +1,41 @@
+
+############
+# Assembly #
+############
+
+rule assembly:
+    input:
+        fastq = opj(config["results_path"],"centrifuge","{sample}_se.viralHits.fq"),
+        flag = opj(config["results_path"],"centrifuge","{sample}_se.ViralHitReads","extract_viralHits.reads")
+        #idFile = lambda wildcards: expand(opj(config["results_path"],"centrifuge","{{sample}}_se.ViralHitReads","{file}"), file=list_file(wildcards.sample) )
+    output:
+        opj(config["results_path"],"assembly","{sample}_se","assembly.stat.txt")
+    params: 
+        outdir = opj(config["results_path"],"assembly","{sample}_se"),
+        spades = config["spades"],
+        script = "../scripts/assembly.py"
+    threads: 
+        config["assembly_threads"]
+    log: 
+        opj(config["results_path"],"assembly","{sample}_se","assembly.log")
+    resources: 
+        runtime = lambda wildcards, attempt: attempt**2*60*4
+    run:
+        shell("mkdir -p {params.outdir}")
+        basedir = os.path.dirname(input.flag)
+        for file in os.listdir(basedir):
+            if file.endswith(".txt"):
+                outdir = params.outdir + "/" + file.replace(".txt","")
+                if os.path.exists(outdir): shell("rm -r {outdir}")
+                file = basedir + "/" + file
+                num_lines = sum(1 for line in open(file))
+                if num_lines < 3: continue
+                outfile = file.replace(".txt",".fq")
+                if params.spades:
+                    shell("python {params.script} -i {input.fastq} -o {outfile} --readIDFile {file} --spades --outdir {outdir} --threads {threads}")
+                else:
+                    shell("python {params.script} -i {input.fastq} -o {outfile} --readIDFile {file} --outdir {outdir} --threads {threads}")
+                os.rename(outdir + "/contigs.fa", outdir + "/" + os.path.basename(file).replace(".txt",".contigs.fa"))
+        
+        with open(output[0], 'w') as fhout:
+            fhout.write("Assemble reads for {} taxas.\n".format(len(os.listdir(basedir))))

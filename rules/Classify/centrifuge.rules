@@ -99,29 +99,6 @@ rule centrifuge_map_se:
         mv {params.tmp_report} {output[1]}
         """
 
-#######################
-## Remove host reads ##
-#######################
-
-rule filter_out_host:
-    input:
-        opj(config["data_path"],"{sample}_se.fq"),
-        opj(config["results_path"],"centrifuge","{sample}_se.out")
-    output:
-        temp(opj(config["results_path"],"centrifuge","{sample}_se.filtered.read.ids")),
-        opj(config["results_path"],"centrifuge","{sample}_se.filtered.fq")
-    params:
-        host_taxid = config['host_taxid']
-    threads: 8
-    resources:
-        runtime = lambda wildcards, attempt: attempt**2*60
-    message: "Removing host reads on {wildcards.sample}"
-    shell:
-        """
-        cut -f 1,2,3 {input[1]} | grep -v $'\t'{params.host_taxid}$ | cut -f 1 > {output[0]}
-        seqtk subseq {input[0]} {output[0]} > {output[1]}
-        """
-
 #####################################
 ## Generate kreports/krona reports ##
 #####################################
@@ -171,11 +148,73 @@ rule all_centrifuge_to_krona:
         shell("ktImportTaxonomy -t 5 -m 3 -tax {params.tax} -o {output[0]} {input_string}")
 
 
+#################################################
+## Parse centrifuge and generate outputs: #######
+## 1. new centrifuge report with taxa lineage; ##
+## 2. readID file for each classification hit. ##
+#################################################
+
+rule parse_centrifuge_output:
+    input:
+        opj(config["results_path"],"centrifuge","{sample}_se.out"),
+        opj(config["results_path"],"centrifuge","{sample}_se.report.tsv"),
+        opj(config["taxdb"],"taxonomy","taxdb.sqlite")
+    output:
+        opj(config["results_path"],"centrifuge","{sample}_se.report.taxLineage.tsv"),
+        opj(config["results_path"],"centrifuge","{sample}_se.ViralHitReads","extract_viralHits.reads")
+    params:
+        host_taxid = config['host_taxid'],
+        min_length = config['centrifuge_min_length'],
+        min_score = config['centrifuge_min_score'],
+        script = "../scripts/parse_centrifuge.py",
+        outdir = opj(config["results_path"],"centrifuge","{sample}_se.ViralHitReads")
+    resources:
+        runtime = lambda wildcards, attempt: attempt**2*60
+    message: "Parsing centrifuge output on {wildcards.sample}"
+    shell:
+        """
+        mkdir -p {params.outdir}
+        python {params.script} -i {input[0]} -r {input[1]} --taxdb {input[2]} --unique --normalize --min_score {params.min_score} \
+                               --min_length {params.min_length} \
+                               --reportTaxalineage {output[0]} \
+                               --taxidHitFolder {params.outdir} #\
+                               #--host_taxid {params.host_taxid}
+        cat {params.outdir}/*txt > {output[1]}
+        """
+
+########################################################
+## First, remove host reads and un-classified reads,  ##
+## then extract virus and non-virus reads respectively##
+########################################################
+
+rule filter_and_extract:
+    input:
+        opj(config["data_path"],"{sample}_se.fq"),
+        opj(config["results_path"],"centrifuge","{sample}_se.out"),
+        opj(config["results_path"],"centrifuge","{sample}_se.ViralHitReads","extract_viralHits.reads")
+    output:
+        opj(config["results_path"],"centrifuge","{sample}_se.nonviral.reads"),
+        opj(config["results_path"],"centrifuge","{sample}_se.viralHits.fq"),
+        opj(config["results_path"],"centrifuge","{sample}_se.nonviralHits.fq")
+    params:
+        host_taxid = config['host_taxid']
+    threads: 8
+    resources:
+        runtime = lambda wildcards, attempt: attempt**2*60
+    message: "Extract viral and non-viral hits reads on {wildcards.sample}"
+    shell:
+        """
+        ## viral hits reads
+        seqtk subseq {input[0]} {input[2]} > {output[1]}
+        cut -f 1,2,3 {input[1]} | grep -v $'\t'{params.host_taxid}$ | grep -v $'\t'0$ | grep -v '\t'1$ | grep -vwFf {input[2]} | cut -f 1 > {output[0]}
+        seqtk subseq {input[0]} {output[0]} > {output[2]}
+        """
+
 ###########################################################
-## Filter out genome sequences based on defined cutoffs, ##
-## e.g., min_read_count,min_abundance; otherwise, keep   ##
-## only the most abundant one and non-host one with      ##
-## most reads                                            ##
+## For non-virus, filter out genome sequences based on   ##
+## defined cutoffs, e.g., min_read_count,min_abundance;  ##
+## otherwise, keep only the most abundant one and        ##
+## non-host one with most reads                          ##
 ###########################################################
 
 rule centrifuge_filter:
@@ -209,10 +248,10 @@ rule get_all_filtered_genomes:
         for f in input.genome_files:
 
             # when no candidate species passes the above filtering process,
-            # an empty {sample}_se.filtered_genomes will be generated with file size of 12 (only rownames),
+            # an empty {sample}_se.filtered_genomes will be generated with file size of 37 (only colnames),
             # then we skip it
         
-            if os.stat(f).st_size == 12:
+            if os.stat(f).st_size < 40 :
                 pass
                 
             else:
@@ -239,16 +278,18 @@ rule get_filtered_genomes:
         opj(config["results_path"],"centrifuge","filtered","genomes.fna"),
         opj(config["results_path"],"centrifuge","{sample}_se.filtered_genomes")
     output:
-        fna = opj(config["results_path"],"centrifuge","filtered","{sample}_se.genomes.fna")
+        fna1 = opj(config["results_path"],"centrifuge","filtered","{sample}_se.virus.genomes.fna"),
+        fna2 = opj(config["results_path"],"centrifuge","filtered","{sample}_se.nonvirus.genomes.fna")
     params:
-        seqids = temp(opj(config["results_path"],"centrifuge","filtered","{sample}_se.seqids"))
+        seqids1 = temp(opj(config["results_path"],"centrifuge","filtered","{sample}_se.virus.seqids")),
+        seqids2 = temp(opj(config["results_path"],"centrifuge","filtered","{sample}_se.nonvirus.seqids"))
     resources:
         runtime = lambda wildcards, attempt: attempt**2*60*2
     run:
         # when no candidate species passes the above filtering process,
-        # an empty {sample}_se.filtered_genomes will be generated with file size of 12 (only rownames).
+        # an empty {sample}_se.filtered_genomes will be generated with file size of 37 (only rownames).
         # we remove this file and exit the program to the system.
-        if os.path.getsize(input[1]) == 12: ## | os.path.getsize(input[0]) == 0:
+        if os.path.getsize(input[1]) < 40: ## | os.path.getsize(input[0]) == 0:
             #basedir = os.path.dirname(params.bam)
             #if not os.path.exists(basedir):
             #    os.makedirs(basedir)
@@ -263,10 +304,17 @@ rule get_filtered_genomes:
             df = pd.concat([df,_df], sort=True)
             # Make unique by seqid
             df = df.groupby("seq").first().reset_index()
+            df_virus = df.loc[df.kingdom == "Viruses"]
+            df_nonvirus = df.loc[df.kingdom != "Viruses"]
             # Write seqids to file
-            with open(params.seqids, 'w') as fhout:
-                for seqid in df.seq:
+            with open(params.seqids1, 'w') as fhout:
+                for seqid in df_virus.seq:
+                    fhout.write("{}\n".format(seqid))
+            
+            with open(params.seqids2, 'w') as fhout:
+                for seqid in df_nonvirus.seq:
                     fhout.write("{}\n".format(seqid))
 
             # Extract sequences to individual sample
-            shell("seqtk subseq {input[0]} {params.seqids} > {output.fna}")
+            shell("seqtk subseq {input[0]} {params.seqids1} > {output.fna1}")
+            shell("seqtk subseq {input[0]} {params.seqids2} > {output.fna2}")

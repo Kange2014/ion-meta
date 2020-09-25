@@ -7,7 +7,7 @@ from pathlib import Path
 from snakemake.utils import min_version, validate
 
 ##### set minimum snakemake version #####
-min_version("4.4.0")
+min_version("5.2.0")
 
 # Disallow slashes in our sample names during Snakemake's wildcard evaluation.
 # Slashes should always be interpreted as directory separators.
@@ -80,6 +80,9 @@ include: "rules/Preprocess/preprocess.rules"
 
 # ---- Classify rules
 include: "rules/Classify/centrifuge.rules"
+
+# ---- Assembly rules
+include: "rules/Assembly/assembly.rules"
 
 # ---- Filter rules
 include: "rules/Filter/sourmash.rules"
