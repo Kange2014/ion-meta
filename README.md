@@ -39,16 +39,17 @@ If finding errors in the above process about Rhtslib, pls. install Rhtslib packa
     cd Rhtslib/src/htslib-1.7/
 
 In this directory, change the flags in the Makefile and Makefile.Rhtslib:
+
     *Comment the lines CPPFLAGS = and LDFLAGS =*
     *Change the CFLAGS = to CFLAGS +=*
 
 Then, re-tar it:
 
-    tar -czvf Rhtslib_1.16.1.tar.gz ./Rhtslib/
+    > tar -czvf Rhtslib_1.16.1.tar.gz ./Rhtslib/
 
 and R CMD INSTALL as described: 
     
-    R CMD INSTALL Rhtslib_1.16.1.tar.gz
+    > R CMD INSTALL Rhtslib_1.16.1.tar.gz
 
 Then, in an R command window: 
 
@@ -70,8 +71,9 @@ Test your configuration by performing a run via
     
     snakemake --configfile /path/to/my_project/config.yaml -j 10 --use-conda
 
+
 ## Appendix:
-#### 1. update referenge genome database, taxonomy database and build index
+#### 1. Update referenge genome database, taxonomy database and build index
 
 ion-meta uses [centrifuge](https://ccb.jhu.edu/software/centrifuge/) as its primary reads classification. So, the database indexes can be built with arbritary sequences like centrifuge. Standard choices are all of the complete bacteria, archaea, viral, fungi, and human genomes, or using the sequences that are part of the BLAST nt database.
 
@@ -92,7 +94,7 @@ If you want to get summary statistics info about the downloaded database, you co
     
     $ python resources/summarize_centrifuge_db.py -h
 
-#### 2. update virus host annotation and KEGG pathogen database information:
+#### 2. Update virus host annotation and KEGG pathogen database information:
 
 To update virus host annotation:
     
@@ -104,7 +106,7 @@ To update KEGG pathogen database:
     $ python resources/download_kegg_genomeinfo.py
     $ mv kegg_genomeinfo.tsv resources/
 
-#### 3. install deeparg and database
+#### 3. Install deeparg and database
 
 For the first time to use ion-meta, pls. run below command, which will only install the required deeparg and the database without running the full workflow. Subsequent runs with --use-conda will make use of the local environments without requiring internet access. This is because deeparg has a different running environment from ion-meta.
 
