@@ -89,12 +89,18 @@ Building index on all complete bacterial, archaea, viral, fungi, and human genom
     # to build the index, first concatenate all downloaded sequences into a single file, and then run centrifuge-build:
     $ cat library/*/*.fna > input-sequences.fna
 
-    # build centrifuge index with 8 threads, which results in three index files named bacteria.archaea.viral.fungi.protozoa.human.*.[1234].cf index files
+    # build centrifuge index with 8 threads, which results in four index files named bacteria.archaea.viral.fungi.protozoa.human.*.[1234].cf index files
     $ centrifuge-build -p 8 --bmax 1342177280 --conversion-table seqid2taxid.map --taxonomy-tree taxonomy/nodes.dmp --name-table taxonomy/names.dmp input-sequences.fna bacteria.archaea.viral.fungi.protozoa.human
 
 If you want to get summary statistics info about the downloaded database, you could run:
     
     $ python resources/summarize_centrifuge_db.py -h
+
+Meanwhile, update the corresponding taxonomy databases just after the complete of database update, ensuring the consistency betweeen them. You can run following commands to download all:
+    
+    $ python resources/download_taxonomy.py
+    $ mv taxonomy resources/
+    $ mv krona resources/
 
 #### 2. Update virus host annotation and KEGG pathogen database information:
 
