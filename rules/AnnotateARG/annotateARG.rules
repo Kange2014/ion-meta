@@ -1,5 +1,5 @@
 localrules:
-    annotate_arg
+    annotate_arg,
     parse_arg
 
 ####################################################
@@ -15,17 +15,16 @@ localrules:
 # 3. Annotate short sequence reads when the input is a nucleotide FASTA file
 
 rule annotate_arg:
-    """Extracts input sequences from centrifuge database"""
+    """Annotate Antibiotic Resistance Genes (ARGs)"""
     input:
-        fastq = opj(config["data_path"],"{sample}_se.fq")
+        fasta = opj(config["data_path"],"{sample}_se.fa")
     output:
-        fasta = opj(config["data_path"],"{sample}_se.fa"),
         arg = opj(config["results_path"],"deeparg","{sample}_se.deeparg.mapping.ARG")
-    resources:
-        runtime = lambda wildcards, attempt: attempt**2*60
     params:
         arg_prefix = opj(config["results_path"],"deeparg","{sample}_se.deeparg"),
         data = config["deeparg_dir"]
+    resources:
+        runtime = lambda wildcards, attempt: attempt**2*60
     conda:
         "../../envs/deepARG.yaml"
     shell:
@@ -33,16 +32,14 @@ rule annotate_arg:
         # if deeparg is not installed, install it and also data
         if [ ! -x "$(command -v deeparg)" ]; then
             echo 'deeparg is not installed. We will install it now!' >&2
-            pip install deeparg==1.0.1
+            pip install deeparg==1.0.2
             deeparg download_data -o {params.data}
         elif [ ! -d {params.data} ]; then
             deeparg download_data -o {params.data}
         fi
         
-        # convert fastq to fasta
-        seqtk seq -a {input.fastq} > {output.fasta}
         # annotate ARG from short reads directly
-        deeparg predict --model SS --type nucl -i {output.fasta} -d {input.data} -o {params.arg_prefix}
+        deeparg predict --model SS --type nucl -i {input.fasta} -d {params.data} -o {params.arg_prefix}
         """
 
 rule parse_arg:
@@ -54,7 +51,7 @@ rule parse_arg:
         opj(config["results_path"],"deeparg","{sample}_se.deeparg.png")
     params:
         gene_len = opj(config["deeparg_dir"],"database/v2/features.gene.length"),
-        script = "../scripts/parse_ARG.py"
+        script = "scripts/parse_ARG.py"
     resources:
         runtime = lambda wildcards, attempt: attempt**2*60
     message: "Parsing deepARG output on {wildcards.sample}"

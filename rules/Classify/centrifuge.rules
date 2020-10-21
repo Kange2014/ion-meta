@@ -166,7 +166,7 @@ rule parse_centrifuge_output:
         host_taxid = config['host_taxid'],
         min_length = config['centrifuge_min_length'],
         min_score = config['centrifuge_min_score'],
-        script = "../scripts/parse_centrifuge.py",
+        script = "scripts/parse_centrifuge.py",
         outdir = opj(config["results_path"],"centrifuge","{sample}_se.ViralHitReads")
     resources:
         runtime = lambda wildcards, attempt: attempt**2*60

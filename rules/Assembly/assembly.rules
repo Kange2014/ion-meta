@@ -13,7 +13,7 @@ rule assembly:
     params: 
         outdir = opj(config["results_path"],"assembly","{sample}_se"),
         spades = config["spades"],
-        script = "../scripts/assembly.py"
+        script = "scripts/assembly.py"
     threads: 
         config["assembly_threads"]
     log: 
