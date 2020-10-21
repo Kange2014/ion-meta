@@ -83,14 +83,28 @@ Building index on all complete bacterial, archaea, viral, fungi, and human genom
     
     # first use centrifuge-download to download genomes and taxonomy information from NCBI. 
     $ centrifuge-download -o taxonomy taxonomy 
-    $ centrifuge-download -o library -P 8 -m -d "archaea,bacteria,viral,fungi,protozoa" refseq > seqid2taxid.map
-    $ centrifuge-download -o library -d "vertebrate_mammalian" -a "Chromosome" -t 9606 -c 'reference genome'  refseq >> seqid2taxid.map
+    $ cur_date=`date +%Y-%m-%d`
+    $ mkdir $cur_date
+    $ centrifuge-download -o $cur_date -P 10 -m -d "archaea,bacteria,viral,fungi,protozoa" refseq > seqid2taxid.map
+    $ centrifuge-download -o $cur_date -P10 -d "vertebrate_mammalian" -a "Chromosome" -t 9606 -c 'reference genome'  refseq >> seqid2taxid.map
+
+Since the downloading work will need a long time, you may hope to download the genomes using a script:
+
+    $ nohup sh resources/download_genomes.sh &
 
     # to build the index, first concatenate all downloaded sequences into a single file, and then run centrifuge-build:
-    $ cat library/*/*.fna > input-sequences.fna
-
+    $ cat $cur_date/*/*.fna > input-sequences.fna
     # build centrifuge index with 8 threads, which results in four index files named bacteria.archaea.viral.fungi.protozoa.human.*.[1234].cf index files
     $ centrifuge-build -p 8 --bmax 1342177280 --conversion-table seqid2taxid.map --taxonomy-tree taxonomy/nodes.dmp --name-table taxonomy/names.dmp input-sequences.fna bacteria.archaea.viral.fungi.protozoa.human
+    
+    # gzip the input-sequences.fna file
+    $ gzip -c input-sequences.fna > input-sequences.fna.gz
+
+Then, move these files into resources/classifier_db:
+
+    $ mv bacteria.archaea.viral.fungi.protozoa.human* resources/classifier_db
+    $ mv seqid2taxid.map resources/classifier_db
+    $ mv input-sequences.fna.gz resources/classifier_db
 
 If you want to get summary statistics info about the downloaded database, you could run:
     
