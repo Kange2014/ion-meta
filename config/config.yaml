@@ -11,13 +11,13 @@
 #
 
 workdir: "{PROJECT_FP}"
-samplelist_fp: "samples.csv"
+samplelist_fp: "{PROJECT_FP}/samples.csv"
 paired_end: false
 
-data_path: data
-results_path: results
-scratch_path: temp
-report_path: results/report
+data_path: "{PROJECT_FP}/data"
+results_path: "{PROJECT_FP}/results"
+scratch_path: "{PROJECT_FP}/temp"
+report_path: "{PROJECT_FP}/results/report"
 
 # taxonomy database path
 taxdb: /results/luze/ion-meta/resources
@@ -106,8 +106,16 @@ bowtie2_params: "--very-sensitive"
 min_mapQ: 0
 min_mapped_regions: 3
 
-###############$
+################
 ### Assembly ###
 ################
 spades: True
 assembly_threads: 10
+
+################
+## ARG Predict #
+################
+
+perc_covered: 85
+perc_identity: 95
+num_reads: 2
