@@ -25,7 +25,7 @@ if not config:
         "config file, and specify with --configfile")
 
 ## Change your workdir
-workdir: str(config['workdir'])
+#workdir: str(config['workdir'])
 
 # Setting up config files and samples
 
@@ -91,7 +91,7 @@ include: "rules/Filter/sourmash.rules"
 include: "rules/Map/bowtie2.rules"
 
 # ---- AnnotateARG rules
-include: "rules/AnnotateARG/AnnotateARG.rules"
+include: "rules/AnnotateARG/annotateARG.rules"
 
 # ---- Report rules
 include: "rules/Report/report.rules"
