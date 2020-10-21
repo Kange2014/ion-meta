@@ -2,4 +2,5 @@ channels:
  - bioconda 
 dependencies:
  - python=2.7.18
+ - diamond=0.9.24
  
