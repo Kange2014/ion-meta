@@ -11,11 +11,12 @@ def arg_png(out_png, arg_pd):
     drug_class=arg_pd['predicted_ARG-class']
     drug_class_type=drug_class.value_counts()
     drug_class_df=pd.DataFrame(drug_class_type)
-    #plt.figure()
-    drug_class_df.plot.pie(subplots=True, figsize=(8, 4))
-    #plt.show()
-    #fig.savefig('AMR.'+out_png, dpi=300)
-    plt.savefig('AMR.'+out_png)
+    if arg_pd.empty:
+        autopct = None
+    else:
+        autopct = '%3.1f%%'
+    plt.pie(drug_class_df['predicted_ARG-class'],labels=drug_class_df.index, autopct = autopct)
+    plt.savefig(out_png)
     #return out_png
 
 #得到数据库中每个ARG的平均长度
@@ -84,7 +85,7 @@ def arg_table(deeparg_file, arg_pd, d_arg_avg_len):
         temp_list.append([arg, cover_region_depth(d_arg_cover[arg]),d_arg_avg_len[arg],cover_p,id])
     cover_id_pd=pd.DataFrame(temp_list,columns=['#ARG', 'covered_length','gene_length','perc_covered', 'perc_identity'])
     final=pd.merge(arg_count, cover_id_pd, on='#ARG')
-    final=final.rename(columns={'counts':'#reads','#ARG':'ARG', 'gene_length': 'ARG_length'})
+    final=final.rename(columns={'counts':'num_reads','#ARG':'ARG', 'gene_length': 'ARG_length'})
     return final
 
 @click.command()

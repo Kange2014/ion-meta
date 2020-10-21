@@ -253,7 +253,10 @@ def write_config(args, conda_prefix, project_fp, samplelists):
         # Override loaded config defaults (if any) for a few specific items.
         paired = layout == "paired"
         defaults["paired_end"] = paired
-        defaults["samplelist_fp"] = samplelists[layout].name
+        #print(type(samplelists)) # <class 'dict'>
+        #print(samplelists[layout])
+        #print(samplelists[layout].name)
+        #defaults["samplelist_fp"] = samplelists[layout].name
 
         cfg = config_update(cfg, defaults)
         with config_file.open('w') as out:
