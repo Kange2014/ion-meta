@@ -112,7 +112,7 @@ To update KEGG pathogen database:
 
 For the first time to use ion-meta, pls. run below command, which will only install the required deeparg and the database without running the full workflow. Subsequent runs with --use-conda will make use of the local environments without requiring internet access. This is because deeparg has a different running environment from ion-meta.
 
-    $ snakemake --use-conda --conda-create-envs-only
+    $ snakemake --configfile /path/to/my_project/config.yaml --use-conda --create-envs-only
     
     
     
