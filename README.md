@@ -63,6 +63,7 @@ Initiate and Configure the workflow according to your needs via editing the file
 In the generated directory, a new config file and a new sample list were created (by default named config.yaml and samplelist.csv, respectively). Edit the config file in your favorite text editor, in particular for below to ensure they match your case:
 
     taxdb: /results/luze/ion-meta/resources
+    deeparg_dir: /results/luze/ion-meta/resources/deeparg
     centrifuge_dir: /results/luze/ion-meta/resources/classifier_db
     centrifuge_base: bacteria.archaea.viral.fungi.protozoa.human
 
