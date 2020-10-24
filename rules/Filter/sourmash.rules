@@ -176,6 +176,11 @@ rule sourmash_filter:
         if seqid2taxidCov_filtered.empty:
             seqid2taxidCov_filtered = seqid2taxidCov.loc[seqid2taxidCov.f_match.idxmax()]
             
+        # when only one record is in it, seqid2taxidCov_filtered is pandas.core.series.Series
+        # convert seqid2taxidCov_filtered to a DataFrame
+        if not isinstance(seqid2taxidCov_filtered, pd.DataFrame): 
+            seqid2taxidCov_filtered = pd.DataFrame([seqid2taxidCov_filtered])
+         
         # for same taxid with multiple genomes (eg, different species/strains within one genus), 
         # select the one with the highest percent coverage as a representative
         seqid2taxidCov_filtered = seqid2taxidCov_filtered.sort_values("f_match",ascending=False).drop_duplicates(['taxID'])
