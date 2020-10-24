@@ -58,6 +58,7 @@ knitr::opts_chunk$set(warning=TRUE,
 #============================================================
 library(pavian)
 library(dplyr)
+options(dplyr.summarise.inform = FALSE)
 library(ggplot2)
 library(DT)
 library(Rsamtools)
@@ -68,7 +69,7 @@ library(openxlsx)
 library(kableExtra)
 ```
 
-### 1. 样本测序数据物种分类报告 {.tabset}
+### 1. 测序数据分类汇总 {.tabset}
 
 ```{r get_summary_report}
 
@@ -92,6 +93,8 @@ DT::datatable(report_summary_percent, rownames=FALSE,
              )
 ```
 
+<br />  
+
 #### 绝对数字
 
 ```{r}
@@ -99,6 +102,8 @@ DT::datatable(report_summary, rownames=FALSE,
              options=list(dom = 't', scrollX = TRUE)
              )
 ```
+
+<br />  
 
 ### 2. 病原微生物检测报告
 
@@ -433,14 +438,14 @@ fn_classify_results <- gsub(".taxLineage.tsv",".xlsx",snakemake@input[[3]])
 write.xlsx(list_of_datasets,fn_classify_results)
 ```
 
-##### **病毒**:  
+##### **病毒**：
 
 ```{r virus_results}
 
 if( any(classify_results_new$kingdom == "Viruses") ){
-    output <- classify_results_new[classify_results_new$kingdom == "Viruses",]
-    output$kingdom <- NULL
-    target_host <- virus_host[virus_host$virus.tax.id %in% output$taxID,]
+    virus_output <- classify_results_new[classify_results_new$kingdom == "Viruses",]
+    virus_output$kingdom <- NULL
+    target_host <- virus_host[virus_host$virus.tax.id %in% virus_output$taxID,]
     target_host = target_host[!grepl("Viridiplantae",target_host$host.lineage),] # plants & algal
     target_host = target_host[!grepl("Tubuline",target_host$host.lineage),] # amoeba
     target_host = target_host[!grepl("Bacteria",target_host$host.lineage),] # bacterial
@@ -450,9 +455,9 @@ if( any(classify_results_new$kingdom == "Viruses") ){
     target_host = target_host[!grepl("Phycodnaviridae",target_host$virus.lineage),] # also algal
     target_host = target_host[!grepl("Insecta",target_host$host.lineage),] # insect
     # if host is unknown, keep the virus
-    output1 <- output[! output$taxID %in% virus_host$virus.tax.id, ]
+    output1 <- virus_output[! virus_output$taxID %in% virus_host$virus.tax.id, ]
     # if host is known, keep the virus when it has other type of hosts
-    output2 <- output[output$taxID %in% target_host$virus.tax.id,]
+    output2 <- virus_output[virus_output$taxID %in% target_host$virus.tax.id,]
     virus_output <- rbind(output1,output2)
     if(nrow(virus_output) == 0){
         cat("    未检测到","\n")
@@ -469,11 +474,10 @@ if( any(classify_results_new$kingdom == "Viruses") ){
 ```
 
 ```{r, viral MoH annoate}
-
+text_formatted <- c("")
 if(nrow(virus_output) > 0){
     output_moh <- raw_virus_results[raw_virus_results$taxID %in% virus_output$taxID,]
     if(nrow(output_moh) > 0 ){
-        text_formatted <- c("")
         for(i in 1:nrow(output_moh)){
             if(!is.na(output_moh[i,"病原归类"])){
                 text = c("##    ",as.character(output_moh[i,'name']),"属于", output_moh[i,"病原归类"], "，分类学地位为",output_moh[i,"分类学地位"],
@@ -492,13 +496,13 @@ if(nrow(virus_output) > 0){
 
 <br />
 
-##### **细菌**:  
+##### **细菌**：
 
 ```{r bacteria_results}
 if( any(classify_results_new$kingdom == "Bacteria") ){
-    output <- classify_results_new[classify_results_new$kingdom == "Bacteria",]
-    output$kingdom <- NULL
-    DT::datatable(output,rownames = FALSE, ## extensions = 'Buttons',
+    bac_output <- classify_results_new[classify_results_new$kingdom == "Bacteria",]
+    bac_output$kingdom <- NULL
+    DT::datatable(bac_output,rownames = FALSE, ## extensions = 'Buttons',
               options = list(dom = 't', scrollX = TRUE)
               )
 }else{
@@ -508,10 +512,10 @@ if( any(classify_results_new$kingdom == "Bacteria") ){
 ```
 
 ```{r, bacteria MoH annotate}
+text_formatted <- c("")
 if( any(classify_results_new$kingdom == "Bacteria") ){
-    output_moh <- cellular_results[cellular_results$taxID %in% output$taxID,]
+    output_moh <- cellular_results[cellular_results$taxID %in% bac_output$taxID,]
     if(nrow(output_moh) > 0 ){
-        text_formatted <- c("")
         for(i in 1:nrow(output_moh)){
             if(!is.na(output_moh[i,"病原归类"])){
                 text = c("##    ",as.character(output_moh[i,'name']),"属于", output_moh[i,"病原归类"], 
@@ -530,13 +534,13 @@ if( any(classify_results_new$kingdom == "Bacteria") ){
 
 <br />
 
-#####  **古菌**:  
+#####  **古菌**：
 
 ```{r archaea_results}
 if( any(classify_results_new$kingdom == "Archaea") ){
-    output <- classify_results_new[classify_results_new$kingdom == "Archaea",]
-    output$kingdom <- NULL
-    DT::datatable(output,rownames = FALSE, ## extensions = 'Buttons',
+    arc_output <- classify_results_new[classify_results_new$kingdom == "Archaea",]
+    arc_output$kingdom <- NULL
+    DT::datatable(arc_output,rownames = FALSE, ## extensions = 'Buttons',
               options = list(dom = 't', scrollX = TRUE)
               )
 }else{
@@ -547,13 +551,13 @@ if( any(classify_results_new$kingdom == "Archaea") ){
 
 <br />
 
-##### **真菌/寄生虫**:  
+##### **真菌/寄生虫**：
 
 ```{r other_results}
 if( any(classify_results_new$kingdom == "Eukaryota") ){
-    output <- classify_results_new[classify_results_new$kingdom == "Eukaryota",]
-    output$kingdom <- NULL
-    DT::datatable(output,rownames = FALSE, ## extensions = 'Buttons',
+    fungi_output <- classify_results_new[classify_results_new$kingdom == "Eukaryota",]
+    fungi_output$kingdom <- NULL
+    DT::datatable(fungi_output,rownames = FALSE, ## extensions = 'Buttons',
               options = list(dom = 't', scrollX = TRUE)
               )
 }else{
@@ -563,10 +567,10 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
 ```
 
 ```{r, fungi MoH annotate}
+text_formatted <- c("")
 if( any(classify_results_new$kingdom == "Eukaryota") ){
-    output_moh <- cellular_results[cellular_results$taxID %in% output$taxID,]
+    output_moh <- cellular_results[cellular_results$taxID %in% fungi_output$taxID,]
     if(nrow(output_moh) > 0 ){
-        text_formatted <- c("")
         for(i in 1:nrow(output_moh)){
             if(!is.na(output_moh[i,"病原归类"])){
                 text = c("##    ",as.character(output_moh[i,'name']),"属于", output_moh[i,"病原归类"], 
@@ -583,9 +587,11 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
 
 `r text_formatted`
 
-*注: 更多可能结果可参考本报告第6部分。*
+*注: 更多可能结果可参考本报告第5部分。*
 
-### 4. 耐药基因检测结果 
+<br />  
+
+### 3. 耐药基因检测结果 
 
 ```{r}
 arg_table = read.table(snakemake@input[[7]],header=T,sep="\t",quote="",comment.char="") 
@@ -610,7 +616,9 @@ if(nrow(arg_table) == 0){
 
 ```
 
-### 5. 基因组覆盖图
+<br />  
+
+### 4. 基因组覆盖图
 
 ```{r plot_coverage,fig.width=10,fig.height=3.5}
 
@@ -657,7 +665,9 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
 
 ```
 
-### 6. 原始检测结果下载
+<br />  
+
+### 5. 原始检测结果下载
 
 ```{r download_raw_data}
     #' define an embed_files function: first zip files, and then embed it
@@ -671,7 +681,9 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
     embed_files(c(fn_classify_results,snakemake@input[[4]]))
 ```
 
-### 7. 病毒拼接结果下载
+<br />  
+
+### 6. 病毒拼接结果下载
 
 ```{r assembly_results}
 
@@ -688,11 +700,15 @@ if( nrow(virus_output) > 0 ){
     if(length(contigs_list) > 0){
         embed_files(contigs_list,name = with_ext(gsub("_se.report.xlsx","",basename(fn_classify_results)), '.ViralAssemblyResults.zip'))
     }else{
-        cat("    No Assembly Results Available", "\n")
+        cat("    无拼接结果可供下载！", "\n")
     }
    
 }
 ```
 
+<br />  
+
 ### 关于
 仅限研究使用。不适用于任何与动物或人类相关的治疗或诊断。 
+
+<br />  
