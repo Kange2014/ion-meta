@@ -75,6 +75,20 @@ Test your configuration by performing a run via
     snakemake --configfile /path/to/my_project/config.yaml -j 10 --use-conda
 
 
+## Docker
+
+You can also build a docker to create, deploy, and run applications with an isolated running environment in "containers". Pls. refer to a "Get started with Docker" at [docker.com](https://docs.docker.com/get-started/) for a better understanding about it and also installation.
+
+Like above stepe, you first need to download one copy of the codes from the github, then run:
+
+    docker build -f Docker -t ion-meta:v2 .
+
+For docker use:
+
+    docker run -it --rm -v /Path/to/Database:/ion-meta/resources/ -v /Path/to/Bam:/example -v /Path/to/Results:/example/results ion-meta:v2 /bin/bash
+
+Then, like above step 4 and 5, run the workflow.
+
 ## Appendix:
 #### 1. Update referenge genome database, taxonomy database and build index
 
