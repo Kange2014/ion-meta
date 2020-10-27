@@ -20,10 +20,10 @@ scratch_path: "{PROJECT_FP}/temp"
 report_path: "{PROJECT_FP}/results/report"
 
 # taxonomy database path
-taxdb: /results/luze/ion-meta/resources
+taxdb: /ion-meta/resources
 
 # deepARG database path
-deeparg_dir: /results/luze/ion-meta/resources/deeparg
+deeparg_dir: /ion-meta/resources/deeparg
 
 ######################
 ### CLASSIFICATION ###
@@ -36,7 +36,7 @@ deeparg_dir: /results/luze/ion-meta/resources/deeparg
 # the above file for the first time:
 #  2. sequence data with fasta format (input-sequences.fna.gz)
 #  3. mapping file of seqids to taxids (seqid2taxid.map)
-centrifuge_dir: /results/luze/ion-meta/resources/classifier_db
+centrifuge_dir: /ion-meta/resources/classifier_db
 
 # Specify a custom built centrifuge index to use instead of the prebuilt
 # Exclude the '.*.cf' suffix
