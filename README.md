@@ -79,13 +79,31 @@ Test your configuration by performing a run via
 
 You can also build a docker to create, deploy, and run applications with an isolated running environment in "containers". Pls. refer to a "Get started with Docker" at [docker.com](https://docs.docker.com/get-started/) for a better understanding about it and also installation.
 
-Like above stepe, you first need to download one copy of the codes from the github, then run:
+Like above steps, you first need to download one copy of the codes from the github, then run:
 
-    docker build -f Docker -t ion-meta:v2 .
+    docker build -f Dockerfile -t ion-meta:v2 .
+
+Sometimes, you may find you cannot install R package Rsamtools correctly. If it shows a failure related to Rhtslib, this may be due to the conflicts between htslib from samtools and htslib from Rhtslib. We can first uninstall samtools in the docker first, then install R package Rsamtools, and finally install samtools:
+
+    docker run -it ion-meta:v2 /bin/bash
+    conda remove -n base samtools
+    R
+    >BiocManager::install('Rsamtools')
+    >q()
+    conda install -c bioconda samtools=1.10
+    exit
+    
+We need to save the changes of docker image. Use below to identify the container ID:
+
+    docker ps -a 
+
+Then save the image:
+
+    docker commit <container_id> ion-meta:v2
 
 For docker use:
 
-    docker run -it --rm -v /Path/to/Database:/ion-meta/resources/ -v /Path/to/Bam:/example -v /Path/to/Results:/example/results ion-meta:v2 /bin/bash
+    docker run -it --rm -v /Path/to/Database/:/ion-meta/resources/classifer_db/ -v /Path/to/Bam:/example -v /Path/to/Results:/example/results ion-meta:v2 /bin/bash
 
 Then, like above step 4 and 5, run the workflow.
 
