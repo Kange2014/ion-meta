@@ -103,7 +103,7 @@ Then save the image:
 
 For docker use:
 
-    docker run -it --rm -v /Path/to/Database/:/ion-meta/resources/classifer_db/ -v /Path/to/Bam:/example -v /Path/to/Results:/example/results ion-meta:v2 /bin/bash
+    docker run -it --rm -v /Path/to/Database/:/ion-meta/resources/ -v /Path/to/Bam:/input -v /Path/to/Results:/ion-meta/example/results ion-meta:v2 /bin/bash
 
 Then, like above step 4 and 5, run the workflow.
 
