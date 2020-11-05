@@ -6,14 +6,11 @@ rule bam_to_fastq:
     input:
         lambda wildcards: Samples[wildcards.sample]['1']
     output:
-        fastq = opj(config["data_path"],"{sample}_se.fq"),
-        fasta = opj(config["data_path"],"{sample}_se.fa")
+        opj(config["data_path"],"{sample}_se.fq")
     resources:
         runtime = lambda wildcards, attempt: attempt**2*60
-    message: "BAM to FASTQ/FASTA converting on {wildcards.sample}"
+    message: "BAM to FASTQ converting on {wildcards.sample}"
     shell:
         """
-        samtools bam2fq {input} > {output.fastq}
-        # convert fastq to fasta
-        seqtk seq -a {output.fastq} > {output.fasta}
+        samtools bam2fq {input} > {output}
         """

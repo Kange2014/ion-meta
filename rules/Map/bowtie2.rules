@@ -21,8 +21,7 @@ rule bowtie2_map_against_filtered_se:
     input:
         index = expand(opj(config["results_path"],"centrifuge","bowtie2","{{sample}}_se.genomes.filtered.{index}.bt2l"), index=range(1,5)),
         #index = expand(opj(config["results_path"],"centrifuge","bowtie2","{sample}_se.genomes.filtered.1.bt2l"), sample=Samples.keys()),
-        se_viral = opj(config["results_path"],"centrifuge","{sample}_se.viralHits.fq"),
-        se_nonviral = opj(config["results_path"],"centrifuge","{sample}_se.nonviralHits.fq")
+        se = opj(config["results_path"],"centrifuge","{sample}_se.filtered.fq")
     output:
         temp(opj(config["results_path"],"centrifuge","bowtie2","{sample}_se.sam"))
     threads: config["bowtie2_threads"]
@@ -34,7 +33,7 @@ rule bowtie2_map_against_filtered_se:
         runtime = lambda wildcards, attempt: attempt**2*60*4
     shell:
         """
-        bowtie2 {params.setting} -x {params.prefix} -U {input.se_viral},{input.se_nonviral} --no-unal -p {threads} > {params.tmp_out}
+        bowtie2 {params.setting} -x {params.prefix} -U {input.se} --no-unal -p {threads} > {params.tmp_out}
         mv {params.tmp_out} {output[0]}
         """
 
