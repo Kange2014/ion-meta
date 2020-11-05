@@ -5,27 +5,33 @@ channels:
   - conda-forge
   - biocore
   - bioconda
+  - r
 
 dependencies:
-  - python>=3.5
+  - biopython
+  - ete3
+  - python=3.6.7
   - snakemake>=4.4.0
+  - samtools
+  - r=3.6
+  - spades
+  - megahit
+  - matplotlib
+  - click
+  - ruamel.yaml
   - seqtk
   - pandas
   - bowtie2
-  - samtools
   - diamond>=0.9.19
-  - biopython
   - centrifuge
-  - ete3
-  - conda
   - sourmash
   - bedtools
   - scikit-bio
   - scikit-learn
   - krona
   - blast
-  - ruamel.yaml
-  - r>=3.4.0
-  - r-rmarkdown
   - pandoc
-  
+  - r-kableextra
+  - r-openxlsx
+  - r-rmarkdown
+  - r-xfun
