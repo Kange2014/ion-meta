@@ -1,1 +1,1 @@
-For the first time, the workflow will download taxonomy related databases files like taxdum.tar.gz, taxdb.sqlite, taxdb.sqlite.traverse.pkl from NCBI and keep them in this filefolder for later analysis, if not provided. But we suggest to update the ion-meta genome database and taxonomy database simultaneously before running the pipeline. 
+For the first time, the workflow will download taxonomy related databases files like taxdum.tar.gz, taxdb.sqlite, taxdb.sqlite.traverse.pkl from NCBI and keep them in this filefolder for later analysis, if not provided.

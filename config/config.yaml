@@ -11,19 +11,16 @@
 #
 
 workdir: "{PROJECT_FP}"
-samplelist_fp: "{PROJECT_FP}/samples.csv"
+samplelist_fp: "samples.csv"
 paired_end: false
 
-data_path: "{PROJECT_FP}/data"
-results_path: "{PROJECT_FP}/results"
-scratch_path: "{PROJECT_FP}/temp"
-report_path: "{PROJECT_FP}/results/report"
+data_path: data
+results_path: results
+scratch_path: temp
+report_path: results/report
 
 # taxonomy database path
-taxdb: /ion-meta/resources
-
-# deepARG database path
-deeparg_dir: /ion-meta/resources/deeparg
+taxdb: /results/luze/ion-meta/resources
 
 ######################
 ### CLASSIFICATION ###
@@ -36,7 +33,7 @@ deeparg_dir: /ion-meta/resources/deeparg
 # the above file for the first time:
 #  2. sequence data with fasta format (input-sequences.fna.gz)
 #  3. mapping file of seqids to taxids (seqid2taxid.map)
-centrifuge_dir: /ion-meta/resources/classifier_db
+centrifuge_dir: /results/luze/ion-meta/resources/classifier_db
 
 # Specify a custom built centrifuge index to use instead of the prebuilt
 # Exclude the '.*.cf' suffix
@@ -47,32 +44,20 @@ centrifuge_base: bacteria.archaea.viral.fungi.protozoa.human
 # Set to 1 to implement LCA-classification as in Kraken
 centrifuge_max_assignments: 1
 
-# Minimum hit length & score for classifications by centrifuge.
-# Because centrifuge doesn't have a filtering algorithm, we use min_length & min_score to filter results.
-centrifuge_min_length: 22
+# Minimum score for classifications by centrifuge.
+# Because centrifuge doesn't have a filtering algorithm, we use this min_score to filter results.
 centrifuge_min_score: 75
 
 ## Host taxid for filtering, e.g., humans: 9606
 host_taxid: 9606
 
 # Filtering of genomes
-# Here, apply different strategies to filter classification results for viruses, 
-# and bacteria (also include fungi,parasites, etc.), respectively.
-#
 # Note: there is a hidden condition that all identified species shall have >= 3 unique reads
-#
-# First, for bacteria, ect., do centrifuge filtering and sourmash filtering before further bowtie2 mapping,
-# which can help get genome coverage info.
-
-
-# Centrifuge filtering
 # Set minimum read count required during the pre-filtering step to include a genome for downstream analysis
 # Note that this is uniquely classified reads
 centrifuge_min_read_count: 2000
 centrifuge_min_abundance: 0.01
 
-
-# Sourmash filtering
 # Number of reads to define fraction of kmer hashes to compute using sourmash
 #
 # The number of hashes is 1 in <hash_fraction>
@@ -96,26 +81,3 @@ sourmash_min_cov: 0.1
 ###############
 bowtie2_threads: 10
 bowtie2_params: "--very-sensitive"
-
-# Virus filtering based on bowtie2 mapping results:
-#   at least 3 viral reads mapped with minimum mapped quality of 0 (probably 
-#   we may need to change this cutoff somehow, but now we use 0 because of we 
-#   put all candidate sometimes very similar genomes together for mapping)
-#   at least 3 nonoverlapping regions of the most closely matched reference
-#
-min_mapQ: 0
-min_mapped_regions: 3
-
-################
-### Assembly ###
-################
-spades: True
-assembly_threads: 10
-
-################
-## ARG Predict #
-################
-
-perc_covered: 85
-perc_identity: 95
-num_reads: 2

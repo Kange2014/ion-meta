@@ -4,63 +4,50 @@
 
 rule define_sourmash_hash_fraction:
     input:
-        opj(config["results_path"],"centrifuge","{sample}_se.nonviralHits.fq")
+        opj(config["results_path"],"centrifuge","{sample}_se.filtered.fq")
     output:
         opj(config["results_path"],"centrifuge","{sample}_se.sourmash_hash_fraction.txt")
     params:
-        numReads = int(config["sourmash_fraction_num_reads"])
-    shell:
-        """
-        count=`wc -l {input[0]} | cut -f 1 -d " "`
-        lines=$[{params.numReads}*4]
-        #echo "$count, $lines"
-        if [[ $count -gt $line ]]; then
-            sourmash_fraction=1000
-        else
-            sourmash_fraction=100
-        fi
+        sample = lambda wildcards: wildcards.sample
+    run:
+        count = -1
+        for count,line in enumerate(open(input[0],'r')):
+            pass
+        count += 1
+    
+        if count >= int(config["sourmash_fraction_num_reads"])*4:
+            sourmash_fraction = 1000
+        else:
+            sourmash_fraction = 100
+    
+        #config[params.sample] = sourmash_fraction
 
-        echo $sourmash_fraction > {output[0]}
-        """
+        with open(output[0],'w') as f:
+            f.write(str(sourmash_fraction))
+        
 
 rule sourmash_hash_genomes:
     """Compute k-mer signatures for filtered genomes"""
     input:
-        opj(config["results_path"],"centrifuge","filtered","{sample}_se.nonvirus.genomes.fna"),
-        opj(config["results_path"],"centrifuge","{sample}_se.sourmash_hash_fraction.txt"),
-        opj(config["results_path"],"centrifuge","filtered","{sample}_se.virus.genomes.fna")
+        opj(config["results_path"],"centrifuge","filtered","{sample}_se.genomes.fna"),
+        opj(config["results_path"],"centrifuge","{sample}_se.sourmash_hash_fraction.txt")
     output:
-        opj(config["results_path"],"sourmash","{sample}_se.nonvirus.genomes.sig"),
-        opj(config["results_path"],"sourmash","{sample}_se.virus.genomes.sig"),
+        sig = opj(config["results_path"],"sourmash","{sample}_se.genomes.sig")
     resources:
         runtime = lambda wildcards, attempt: attempt**2*60*2
     shell:
         """
-        # for non-virus
         hash_fraction=`cat {input[1]}`
-        if [ -s {input[0]} ]; then
-            sourmash compute --singleton -k 31 --scaled $hash_fraction -o {output[0]} -f {input[0]}
-        else
-            touch {output[0]}
-        fi
-        
-        # for virus`
-        if [ -s {input[2]} ]; then
-            sourmash compute --singleton -k 21 --scaled 100 -o {output[1]} -f {input[2]}
-        else
-            touch {output[1]}
-        fi
+        sourmash compute --singleton -k 31 --scaled $hash_fraction -o {output.sig} -f {input[0]}
         """
 
 rule sourmash_hash_sample_se:
     """Compute k-mer signatures for single-end samples"""
     input:
-        opj(config["results_path"],"centrifuge","{sample}_se.nonviralHits.fq"),
-        opj(config["results_path"],"centrifuge","{sample}_se.sourmash_hash_fraction.txt"),
-        opj(config["results_path"],"centrifuge","{sample}_se.viralHits.fq")
+        opj(config["results_path"],"centrifuge","{sample}_se.filtered.fq"),
+        opj(config["results_path"],"centrifuge","{sample}_se.sourmash_hash_fraction.txt")
     output:
-        opj(config["results_path"],"sourmash","{sample}_se.nonvirus.sig"),
-        opj(config["results_path"],"sourmash","{sample}_se.virus.sig")
+        opj(config["results_path"],"sourmash","{sample}_se.sig")
     resources:
         runtime = lambda wildcards, attempt: attempt**2*60*2
     shell:
@@ -68,131 +55,89 @@ rule sourmash_hash_sample_se:
         hash_fraction=`cat {input[1]}`
         sourmash compute -k 31 --scaled $hash_fraction --merge {wildcards.sample} \
         -o {output[0]} {input[0]}
-        # for virus, we use a less strigent kmer size and use a small 
-        sourmash compute -k 21 --scaled 100 --merge {wildcards.sample} \
-        -o {output[1]} {input[2]}
         """
 
-# use sourmash gather based on containment to tell what’s in my metagenome
 rule sourmash_coverage:
     """Calculate coverage of filtered genomes for each sample"""
     input:
-        sample1 = opj(config["results_path"],"sourmash","{sample}_se.nonvirus.sig"),
-        genome1 = opj(config["results_path"],"sourmash","{sample}_se.nonvirus.genomes.sig"),
-        sample2 = opj(config["results_path"],"sourmash","{sample}_se.virus.sig"),
-        genome2 = opj(config["results_path"],"sourmash","{sample}_se.virus.genomes.sig")
+        sample = opj(config["results_path"],"sourmash","{sample}_se.sig"),
+        genome = opj(config["results_path"],"sourmash","{sample}_se.genomes.sig")
     output:
         opj(config["results_path"],"sourmash","{sample}_se.sourmash.csv")
-    params:
-        csv1 = temp(opj(config["results_path"],"sourmash","{sample}_se.sourmash.nonvirus.csv")),
-        csv2 = temp(opj(config["results_path"],"sourmash","{sample}_se.sourmash.virus.csv"))
     resources:
         runtime = lambda wildcards, attempt: attempt**2*60
 
     ### --threshold-bp 100 because in viral metagenomics, sometimes only several hundred bp overlap could be identified
     shell:
         """
-        # sometimes genome.sig is empty
-        if [ -s {input.genome1} ]; then
-            sourmash gather --threshold-bp 100 -o {params.csv1} -k 31 {input.sample1} {input.genome1}
-        fi
-        
-        if [ -s {input.genome1} ]; then
-            sourmash gather --threshold-bp 100 -o {params.csv2} -k 21 {input.sample2} {input.genome2}
-        fi
-        
-        if [ ! -e {params.csv1} ]; then
-            touch {params.csv1}
-            echo -e "intersect_bp,f_orig_query,f_match,f_unique_to_query,f_unique_weighted,average_abund,median_abund,std_abund,name,filename,md5" >> {params.csv1}
-            echo -e "0,0,0,0,0,0,0,0,NC_XXXXX,{output[0]},0" >> {params.csv1}
-        fi
-
-        if [ ! -e {params.csv2} ]; then
-            touch {params.csv2}
-            echo -e "intersect_bp,f_orig_query,f_match,f_unique_to_query,f_unique_weighted,average_abund,median_abund,std_abund,name,filename,md5" >> {params.csv2}
-            echo -e "0,0,0,0,0,0,0,0,NC_XXXXX,{output[0]},0" >> {params.csv2}
-        fi
-
-        sed '1d' {params.csv2} >> {params.csv1}  
-        mv {params.csv1} {output}
-
+                nomatch=`sourmash gather --threshold-bp 100 -o {output[0]} -k 31 {input.sample} {input.genome} | grep  "found 0 matches total" | wc -l `
+		# for some specific extreme cases (eg, 0 matches), no CSV output will be generated by gather using -o flag
+		if [ $nomatch == 1 ]; then
+			touch {output[0]}
+			sourmash signature describe {input.genome} > temp.out
+			name=`cat temp.out | grep ^signature: | sed 's/signature: //' | sed 's/,//'`
+			echo -e "intersect_bp,f_orig_query,f_match,f_unique_to_query,f_unique_weighted,average_abund,median_abund,std_abund,name,filename,md5" >> {output[0]}
+			echo -e "0,0,0,0,0,0,0,0,$name,{output[0]},0" >> {output[0]}
+			rm temp.out
+		fi
         """
-
-#rule collate_sourmash:
-#    """Collate all sourmash coverage files"""
-#    input:
-#        expand(opj(config["results_path"],"sourmash","{sample}_se.csv"),sample=Samples.keys())
-#    output:
-#        opj(config["results_path"],"centrifuge","filtered","sourmash.csv")
-#    run:
-#        df = pd.DataFrame()
-#        for f in input:
-#            sample_run = os.path.basename(f).rstrip(".csv")
-#            _df = pd.read_csv(f, header=0)
-#            _df = _df.assign(sample=pd.Series([sample_run]*len(_df)))
-#            df = pd.concat([df,_df])
-#        df.set_index("sample")
-#        df.to_csv(output[0], index=True, header=True)
 
 rule sourmash_filter:
     """Reads results from sourmash and outputs a fasta file with genomes reaching a certain coverage threshold"""
     input:
         opj(config["results_path"],"sourmash","{sample}_se.sourmash.csv"),
-        opj(config["results_path"],"centrifuge","filtered","{sample}_se.nonvirus.genomes.fna"),
+        opj(config["results_path"],"centrifuge","filtered","{sample}_se.genomes.fna"),
+        opj(config["taxdb"],"taxonomy","taxdb.sqlite"),
         opj(config["results_path"],"centrifuge","{sample}_se.filtered_genomes"),
-        opj(config["results_path"],"centrifuge","filtered","{sample}_se.virus.genomes.fna")
+        opj(config["results_path"],"centrifuge","{sample}_se.report.tsv")
     output:
         opj(config["results_path"],"centrifuge","filtered","{sample}_se.genomes.filtered.fna"),
         opj(config["results_path"],"centrifuge","filtered","{sample}_se.genomes.filtered.ids.tax"),
         temp(opj(config["results_path"],"centrifuge","filtered","{sample}_se.genomes.filtered.ids"))
     params:
-        min_cov = float(config["sourmash_min_cov"]),
-        genome = temp(opj(config["results_path"],"centrifuge","filtered","{sample}_se.genomes.fna"))
+        min_cov = float(config["sourmash_min_cov"])
     run:
+        from ete3 import NCBITaxa
+        ncbi = NCBITaxa(input[2])
 
         df = pd.read_csv(input[0])
-        ids = list([x.split(" ")[0] for x in df.name])
-        df.name = ids
-        df = df[["name","f_match"]]
-        df.rename(columns={'name':'seq'}, inplace = True)
-
-        seqid2taxid = pd.read_csv(input[2], sep="\t")
+        temp = df.loc[df.f_match >= params.min_cov]
         
-        # intersect two tables
-        seqid2taxidCov = pd.merge(seqid2taxid,df,on="seq",how="left")
-
-        # keep virus results, and filter non-virus results according to min coverage cutoff
-        #seqid2taxidCov_nonvirus = seqid2taxidCov.loc[seqid2taxidCov.kingdom != "Viruses"]
-        seqid2taxidCov_filtered = seqid2taxidCov.loc[seqid2taxidCov.f_match >= params.min_cov]
-        seqid2taxidCov_virus = seqid2taxidCov.loc[seqid2taxidCov.kingdom == "Viruses"].copy()
-
-        # set all NaN of f_match as 0 for virus
-        if not seqid2taxidCov_virus.empty: 
-            seqid2taxidCov_virus = seqid2taxidCov_virus.fillna(0) 
-            seqid2taxidCov_filtered = seqid2taxidCov_filtered.append(seqid2taxidCov_virus)
+        seqid2taxid = pd.read_csv(input[3], sep="\t")
+        # Make unique by seqid
+        seqid2taxid = seqid2taxid.groupby("seq").first().reset_index()
 
         # if no genomes meet the coverage requirement, 
         # then keep the one with max coverage for mapping
-        if seqid2taxidCov_filtered.empty:
-            seqid2taxidCov_filtered = seqid2taxidCov.loc[seqid2taxidCov.f_match.idxmax()]
+        if temp.empty:
+            ids = [df.name[df.f_match.idxmax()].split(" ")[0]]
             
-        # when only one record is in it, seqid2taxidCov_filtered is pandas.core.series.Series
-        # convert seqid2taxidCov_filtered to a DataFrame
-        if not isinstance(seqid2taxidCov_filtered, pd.DataFrame): 
-            seqid2taxidCov_filtered = pd.DataFrame([seqid2taxidCov_filtered])
-         
-        # for same taxid with multiple genomes (eg, different species/strains within one genus), 
-        # select the one with the highest percent coverage as a representative
-        seqid2taxidCov_filtered = seqid2taxidCov_filtered.sort_values("f_match",ascending=False).drop_duplicates(['taxID'])
-        # Make unique by seqid
-        #seqid2taxidCov_filtered = seqid2taxidCov_filtered.groupby("seq").first().reset_index()
-        seqid2taxidCov_filtered = seqid2taxidCov_filtered.sort_values("f_match",ascending=False).drop_duplicates(['seq'])
+        else: 
+            ids = list(set([x.split(" ")[0] for x in temp.name]))
+        
+        taxids = seqid2taxid.loc[seqid2taxid['seq'].isin(ids)].taxID
+        taxids = list(set(taxids))
+        taxnames = pd.DataFrame(columns=["taxID","Name","Genus","Family","Kingdom"])
+        for taxid in taxids:
+            lineage = ncbi.get_lineage(taxid)
+            ranks = ncbi.get_rank(lineage)
 
-        seqid2taxidCov_filtered.to_csv(output[1],sep="\t",index=False)
+            genus_name = ""
+            family_name = ""
+            kingdom_name = ""
+            for key, value in ranks.items():
+                if(value == "genus"): genus_name = ncbi.get_taxid_translator([key]).get(key)
+                if(value == "family"): family_name = ncbi.get_taxid_translator([key]).get(key)
+                if(value == "superkingdom"): kingdom_name = ncbi.get_taxid_translator([key]).get(key)
+            
+            tmp = pd.Series([taxid,ncbi.get_taxid_translator([taxid]).get(taxid),genus_name,family_name,kingdom_name],index=["taxID","Name","Genus","Family","Kingdom"])
+            taxnames = taxnames.append(tmp,ignore_index=True)
+        
+        ids2tax = pd.merge(seqid2taxid,taxnames,on="taxID")
+        ids2tax = ids2tax.groupby("seq").first().reset_index()
+        ids2tax.to_csv(output[1],sep="\t",index=False)
 
         with open(output[2], 'w') as fhout:
-            for id in seqid2taxidCov_filtered.seq:
+            for id in ids:
                 fhout.write("{}\n".format(id))
-        
-        shell("cat {input[1]} {input[3]} > {params.genome} ")
-        shell("seqtk subseq {params.genome} {output[2]} > {output[0]}")
+        shell("seqtk subseq {input[1]} {output[2]} > {output[0]}")
