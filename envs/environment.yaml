@@ -31,6 +31,7 @@ dependencies:
   - krona
   - blast
   - pandoc
+  - mscorefonts
   - r-kableextra
   - r-openxlsx
   - r-rmarkdown
