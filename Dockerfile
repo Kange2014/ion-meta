@@ -18,7 +18,7 @@ COPY resources ./resources/
 COPY Snakefile .
 
 # Install environment into base
-RUN apt-get install zip && apt-get clean
+RUN apt-get install -y zip && apt-get clean
 RUN conda env update -n base -f envs/environment.yaml \
 && conda clean -a
 
