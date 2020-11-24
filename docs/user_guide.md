@@ -14,9 +14,9 @@
 
 ion-meta是一个专门针对Ion GeneStudio测序平台宏基因测序数据的可重复分析流程，其预装有一个超过17000种病原微生物的数据库，包含细菌、病毒、古细菌、真菌和寄生虫以及新冠病毒等基因组序列。该流程的核心包括在以BWT（Burrows-Wheeler Transform）和FM（Ferragina-Manzini）index方法构建参考数据库索引后，采用K-mer精确匹配算法，将原始reads分类到相应的微生物基因组上，并进一步对分类结果进行分析过滤、复比对和关键参数计算，最终自动化生成病原微生物检测报告，报告页面包含疑似致病微生物的比对序列数、相对丰度、基因组覆盖度和测序深度等信息。此外，ion-meta标准化了国家卫生部2006年《人间传染的病原微生物名录》，可对具人间传染性的病原微生物进行醒目标识，并能够提供病毒宿主、细菌真菌病原菌等其他注释信息。ion-meta还包含一个耐药基因鉴定与注释模块，能够直接从宏基因组测序数据中识别出潜在的耐药基因。
 
-<div style="text-align: center">
+<p align="center">
 <img src="figures/ion-meta-v2.UG-1.png", width = "80%"/>
-</div>
+</p>
 
 运行 ion-meta分析工具
 ---------------------
@@ -29,9 +29,9 @@ ion-meta是一个专门针对Ion GeneStudio测序平台宏基因测序数据的�
 
 4.  在列出的样本表格中勾选想要分析的样本；输入分析名称，点击启动分析； 
 
-<div style="text-align: center">
+<p align="center">
 <img src="figures/ion-meta-v2.UG-9.png", width = "80%"/>
-</div>
+</p>
 
 注：分析名称可以使用中文，但不能包含空格或特殊字符。
 
@@ -44,9 +44,9 @@ ion-meta宏基因组数据分析结果以报告的形式呈现，其可以分成
 
 统计了样本测序的原始序列数，以及分别比对到宿主、细菌、病毒、真菌和原生动物参考基因组的序列数和百分比。汇总表格分为两个标签：1. 百分比：比对到不同类群序列数占总序列数的百分比值；2. 绝对数字：比对到不同类群的序列数。
 
-<div style="text-align: center">
+<p align="center">
 <img src="figures/ion-meta-v2.UG-2.png", width = "80%"/>
-</div>
+</p>
 
 表格注释：
 
@@ -62,9 +62,9 @@ ion-meta宏基因组数据分析结果以报告的形式呈现，其可以分成
 
 通过表格展示了本次样本中检测到的微生物，根据物种分类信息分为病毒、细菌、古生菌和真菌或原核生物四个检测结果。每个表格给出了检出微生物的物种名和科属信息，分类信息来源于NCBI Taxonomy数据库，可以通过taxID或基因组序列ID号检索到。表格还统计了微生物的比对序列数、丰度、基因组大小、测得序列对微生物基因组的覆盖度和平均测序深度，并且会根据检出微生物的序列丰度从高到低排序。如果在检测到的病原微生物中，发现包含有属于国家卫生部2006年《人间传染的病原微生物名录》中的，则进一步对这些具人间传染性的病原微生物进行醒目标识。若该分类下不能从原始序列中比对分析得到疑似病原微生物，则提示未检出。
 
-<div style="text-align: center">
+<p align="center">
 <img src="figures/ion-meta-v2.UG-3.png", width = "80%"/>
-</div>
+</p>
 
 表格注释：
 
@@ -84,9 +84,10 @@ ion-meta宏基因组数据分析结果以报告的形式呈现，其可以分成
 
 基于深度学习算法模型，直接从样本宏基因组测序数据中，预测其包含的潜在耐药基因，并列出满足筛选条件的耐药基因相关的信息，筛选条件可在ion-meta运行的页面进行设置，包括比对上的reads数目、覆盖的耐药基因长度的百分比、与耐药基因之间的序列一致性百分比等。
 
-<div style="text-align: center">
+<p align="center">
 <img src="figures/ion-meta-v2.UG-4.png", width = "80%"/>
-</div>
+</p>
+
 
 表格注释：
 
@@ -102,17 +103,17 @@ ion-meta宏基因组数据分析结果以报告的形式呈现，其可以分成
 
 通过折线图表示了测序数据在检出微生物全基因组上的分布情况。图中标题是微生物基因组序列ID和物种拉丁名，横坐标表示微生物基因组位置，纵坐标表示该位置比对上的序列数（图表显示的Coverage上限为2500，即如果Coverage超过2500，则显示为2500）。红色和蓝色线分别表示测得序列是DNA正链和负链。
 
-<div style="text-align: center">
+<p align="center">
 <img src="figures/ion-meta-v2.UG-5.png", width = "80%"/>
-</div>
+</p>
 
 ### 原始检测结果下载
 
 点击Download链接可以下载该样本原始的分析结果压缩文件，文件中包含了一个表格文件（可用excel打开）和一个网页文件。表格文件中含有三张表格，raw_classify_results汇总了样本序列比对上的所有潜在微生物分类信息和序列数目，其中各列的涵义如下：
 
-<div style="text-align: center">
+<p align="center">
 <img src="figures/ion-meta-v2.UG-6.png", width = "80%"/>
-</div>
+</p>
 
 -   第一列是比对上的微生物物种名；
 -   第二列是该物种在NCBI中的物种分类ID号；
@@ -152,14 +153,14 @@ proka-euka_classify则列出了检测的原核和真核微生物，并进一步�
 
 网页文件用浏览器打开后，可通过krona动态多层饼图可视化微生物的组成和百分比。Krona图示例：
 
-<div style="text-align: center">
+<p align="center">
 <img src="figures/ion-meta-v2.UG-7.png", width = "70%"/>
-</div>
+</p>
 
 ### 病毒拼接结果下载
 
 对于本报告第二部分所列出的病毒类目标物种，如果比对上的reads能够拼接，则提供拼接基因组草图结果下载。
 
-<div style="text-align: center">
+<p align="center">
 <img src="figures/ion-meta-v2.UG-8.png", width = "80%"/>
-</div>
+</p>
