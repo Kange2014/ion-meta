@@ -109,11 +109,7 @@ ion-meta宏基因组数据分析结果以报告的形式呈现，其可以分成
 
 ### 原始检测结果下载
 
-点击Download链接可以下载该样本原始的分析结果压缩文件，文件中包含了一个表格文件（可用excel打开）和一个网页文件。表格文件中含有三张表格，raw_classify_results汇总了样本序列比对上的所有潜在微生物分类信息和序列数目，其中各列的涵义如下：
-
-<p align="center">
-<img src="figures/ion-meta-v2.UG-6.png", width = "80%"/>
-</p>
+点击Download链接可以下载该样本原始的分析结果压缩文件，文件中包含了一个表格文件（可用excel打开）和一个krona动态多层饼图网页文件。表格文件中含有三张表格，raw_classify_results汇总了样本序列比对上的所有潜在微生物分类信息和序列数目，如下图中上面部分表格所示，其中各列的涵义如下：
 
 -   第一列是比对上的微生物物种名；
 -   第二列是该物种在NCBI中的物种分类ID号；
@@ -125,7 +121,11 @@ ion-meta宏基因组数据分析结果以报告的形式呈现，其可以分成
 
 注：标题栏后第一行物种名如果是root，表示样本中的有一些测序数据不能比对到数据库中的任何物种基因组序列；第三列的物种分类地位如果是leaf，表示该物种的分类单元为最下层。
 
-virus_classify列出了检出的病毒，并进一步在raw_classify_results表格列的基础上，对这些病毒进行更多注释，包括：
+<p align="center">
+<img src="figures/ion-meta-v2.UG-6.png", width = "80%"/>
+</p>
+
+virus_classify列出了检出的病毒，如上图中中间部分表格所示，并进一步在raw_classify_results表格列的基础上，对这些病毒进行更多注释，包括：
 
 -   host.tax.id：病毒宿主tax ID；
 -   host.name：病毒宿主名称；
@@ -139,7 +139,7 @@ virus_classify列出了检出的病毒，并进一步在raw_classify_results表�
 
     以上列，如缺失相关信息，则相应列为空。
 
-proka-euka_classify则列出了检测的原核和真核微生物，并进一步在raw_classify_results表格列的基础上，对其进行更多注释，包括：
+proka-euka_classify则列出了检测的原核和真核微生物，如上图中下面部分表格所示，并进一步在raw_classify_results表格列的基础上，对其进行更多注释，包括：
 
 -   KEGG.Pathogen：是否在KEGG Pathogen数据库被注释，例如是人类病原菌还是动物病原菌等；
 -   KEGG.Disease：KEGG Pathogen数据库注释的相应病原菌所引起的人类疾病
@@ -151,7 +151,7 @@ proka-euka_classify则列出了检测的原核和真核微生物，并进一步�
 
     以上列，如缺失相关信息，则相应列为空。
 
-网页文件用浏览器打开后，可通过krona动态多层饼图可视化微生物的组成和百分比。Krona图示例：
+Krona动态多层饼图网页文件用浏览器打开后，能够可视化样本数据中检测到的微生物组成和百分比：
 
 <p align="center">
 <img src="figures/ion-meta-v2.UG-7.png", width = "70%"/>
