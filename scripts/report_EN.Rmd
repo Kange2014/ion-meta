@@ -1,8 +1,8 @@
 ---
-title: "宏基因组分析报告" 
+title: "Metagenomics Next Generation Sequencing Report"
 author:
     - "Ion Metagenomics"
-date: "`r format(Sys.time(), '%d %b, %Y')`"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 params:
    rmd: "report.Rmd"
 output:
@@ -20,21 +20,23 @@ output:
 <style type="text/css">
 
 h1.title {
-  font-size: 30px;
+  font-size: 38px;
+  color: DarkRed;
   text-align: center;
 }
 h4.author { /* Header 4 - and the author and data headers use this too  */
     font-size: 18px;
   font-family: "Times New Roman", Times, serif;
+  color: DarkRed;
   text-align: center;
 }
 h4.date { /* Header 4 - and the author and data headers use this too  */
   font-size: 18px;
   font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
   text-align: center;
 }
 </style>
-
 
 ```{r setup, echo=FALSE}
 
@@ -69,7 +71,7 @@ library(openxlsx)
 library(kableExtra)
 ```
 
-### 1. 测序数据分类汇总 {.tabset}
+### 1. Sample Summary {.tabset}
 
 ```{r get_summary_report}
 
@@ -85,7 +87,7 @@ report_summary_percent[1] <- report_summary[1]
 
 ```
 
-#### 百分比
+#### Classification summary
 
 ```{r}
 DT::datatable(report_summary_percent, rownames=FALSE,
@@ -93,9 +95,7 @@ DT::datatable(report_summary_percent, rownames=FALSE,
              )
 ```
 
-<br />  
-
-#### 绝对数字
+#### Raw read numbers
 
 ```{r}
 DT::datatable(report_summary, rownames=FALSE,
@@ -103,9 +103,7 @@ DT::datatable(report_summary, rownames=FALSE,
              )
 ```
 
-<br />  
-
-### 2. 病原微生物检测报告
+### 2. Classification Results Report
 
 ``` {r classification}
 raw_classify_results <- read.table(snakemake@input[[3]],header=T,sep="\t",quote="",comment.char="")
@@ -447,7 +445,7 @@ fn_classify_results <- gsub(".taxLineage.tsv",".xlsx",snakemake@input[[3]])
 write.xlsx(list_of_datasets,fn_classify_results)
 ```
 
-##### **病毒**：
+##### **Viruses**:  
 
 ```{r virus_results}
 
@@ -469,7 +467,7 @@ if( any(classify_results_new$kingdom == "Viruses") ){
     output2 <- virus_output[virus_output$taxID %in% target_host$virus.tax.id,]
     virus_output <- rbind(output1,output2)
     if(nrow(virus_output) == 0){
-        cat("    未检测到","\n")
+        cat("    Not Detected","\n")
     }else{
         DT::datatable(virus_output,rownames = FALSE, ## extensions = 'Buttons',
               options = list(dom = 't', scrollX = TRUE)
@@ -477,7 +475,7 @@ if( any(classify_results_new$kingdom == "Viruses") ){
     }
 
 }else{
-    cat("    未检测到","\n")
+    cat("    Not Detected","\n")
 }
 
 ```
@@ -506,7 +504,7 @@ if(exists("virus_output") && nrow(virus_output) > 0){
 
 <br />
 
-##### **细菌**：
+##### **Bacteria**:  
 
 ```{r bacteria_results}
 if( any(classify_results_new$kingdom == "Bacteria") ){
@@ -516,7 +514,7 @@ if( any(classify_results_new$kingdom == "Bacteria") ){
               options = list(dom = 't', scrollX = TRUE)
               )
 }else{
-    cat("    未检测到","\n")
+    cat("    Not Detected","\n")
 }
 
 ```
@@ -544,7 +542,7 @@ if( any(classify_results_new$kingdom == "Bacteria") ){
 
 <br />
 
-#####  **古菌**：
+#####  **Archaea**:  
 
 ```{r archaea_results}
 if( any(classify_results_new$kingdom == "Archaea") ){
@@ -554,14 +552,14 @@ if( any(classify_results_new$kingdom == "Archaea") ){
               options = list(dom = 't', scrollX = TRUE)
               )
 }else{
-    cat("    未检测到","\n")
+    cat("    Not Detected","\n")
 }
 
 ```
 
 <br />
 
-##### **真菌/寄生虫**：
+##### **Fungi/Protozoa**:  
 
 ```{r other_results}
 if( any(classify_results_new$kingdom == "Eukaryota") ){
@@ -571,7 +569,7 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
               options = list(dom = 't', scrollX = TRUE)
               )
 }else{
-    cat("    未检测到","\n")
+    cat("    Not Detected","\n")
 }
 
 ```
@@ -597,17 +595,15 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
 
 `r text_formatted`
 
-*注: 更多可能结果可参考本报告第5部分。*
+*Note: You could also see section 5 for more possible results.*
 
-<br />  
-
-### 3. 耐药基因检测结果 
+### 3. Antibiotic Resistance Genes Results 
 
 ```{r}
 arg_table = read.table(snakemake@input[[7]],header=T,sep="\t",quote="",comment.char="") 
 
 if(nrow(arg_table) == 0){
-    cat("    未检测到","\n")
+    cat("    Not Detected","\n")
 }else{
     arg <- arg_table[arg_table[,'perc_covered'] >= snakemake@params[[8]] & arg_table[,'perc_identity'] >= snakemake@params[[9]],]
     if(nrow(arg) > 0){
@@ -617,25 +613,31 @@ if(nrow(arg_table) == 0){
                           options = list(dom = 't', scrollX = TRUE)
                          )
         }else{
-            cat("    未检测到","\n")
+            cat("    Not Detected","\n")
         }
     }else{
-        cat("    未检测到","\n")
+        cat("    Not Detected","\n")
     }
 }
 
+#### Predicted Antibiotic Resistance Drug Class PieChart
+# Currently, do not show this figure
+# if(nrow(arg_table) == 0){
+#    cat("    Not Detected","\n")
+#}else{
+#    knitr::include_graphics(snakemake@input[[8]])
+#}
+
 ```
 
-<br />  
-
-### 4. 基因组覆盖图
+### 4. Coverage View
 
 ```{r plot_coverage,fig.width=10,fig.height=3.5}
 
 # plot genome coverage
 
 if( exists("virus_output") && nrow(virus_output) > 0 ){
-    cat("检测到的病毒基因组覆盖图","\n")
+    cat("Detected Virus Coverage Plot","\n")
     for( name in virus_output$seqID ){
         plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,])
         ## in a loop, use print to visibly display the plot
@@ -645,7 +647,7 @@ if( exists("virus_output") && nrow(virus_output) > 0 ){
 
 if( any(classify_results_new$kingdom == "Bacteria") ){
     output <- classify_results_new[classify_results_new$kingdom == "Bacteria",]
-    cat("检测到的细菌基因组覆盖图","\n")
+    cat("Detected Bacteria Coverage Plot","\n")
     for( name in output$seqID ){
         plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,])
         ## in a loop, use print to visibly display the plot
@@ -655,7 +657,7 @@ if( any(classify_results_new$kingdom == "Bacteria") ){
 
 if( any(classify_results_new$kingdom == "Archaea") ){
     output <- classify_results_new[classify_results_new$kingdom == "Archaea",]
-    cat("检测到的古菌基因组覆盖图","\n")
+    cat("Detected Archaea Coverage Plot","\n")
     for( name in output$seqID ){
         plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,])
         ## in a loop, use print to visibly display the plot
@@ -665,7 +667,7 @@ if( any(classify_results_new$kingdom == "Archaea") ){
 
 if( any(classify_results_new$kingdom == "Eukaryota") ){
     output <- classify_results_new[classify_results_new$kingdom == "Eukaryota",]
-    cat("检测到的真菌/寄生虫基因组覆盖图","\n")
+    cat("Detected Fungi/Parasite Coverage Plot","\n")
     for( name in output$seqID ){
         plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,])
         ## in a loop, use print to visibly display the plot
@@ -673,11 +675,20 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
     }
 }
 
+
+    #plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,])
+    #plot_pileup_act <- plot_pileup(bam_pileup[bam_pileup[,1] == name,], seq_info_df[name,], text_size = 4)
+    
+    ## in a loop, use print to visibly display the plot
+    #print( plot_pileup_act + ggtitle(paste0(name," | ", id2tax[id2tax[,1] == name,3])) + theme(plot.title = element_text(hjust = 0.5)) )
+
+    #ggsave(paste0(snakemake@params[[1]],name,".cov.pdf"), plot_pileup_act + 
+    #                          ggtitle(name) + theme(plot.title = element_text(hjust = 0.5)),
+    #                          "pdf", height = 2.5, units = "in")
+
 ```
 
-<br />  
-
-### 5. 原始检测结果下载
+### 5. Raw Classification Results
 
 ```{r download_raw_data}
     #' define an embed_files function: first zip files, and then embed it
@@ -691,9 +702,7 @@ if( any(classify_results_new$kingdom == "Eukaryota") ){
     embed_files(c(fn_classify_results,snakemake@input[[4]]))
 ```
 
-<br />  
-
-### 6. 病毒拼接结果下载
+### 6. Viral Assembly Results
 
 ```{r assembly_results}
 
@@ -703,24 +712,24 @@ if( exists("virus_output") && nrow(virus_output) > 0 ){
         contigs_file = paste0(contigs_folder,taxid, "/", paste0(taxid,".contigs.fa"))
         contigs_list <- c()
         info <- file.info(contigs_file)
-        if (!is.na(info$size) && info$size > 0){
+        if (info$size > 0){
             contigs_list <- c(contigs_list,contigs_file)
         }
     }
     if(length(contigs_list) > 0){
         embed_files(contigs_list,name = with_ext(gsub("_se.report.xlsx","",basename(fn_classify_results)), '.ViralAssemblyResults.zip'))
     }else{
-        cat("    无拼接结果可供下载！", "\n")
+        cat("    No Assembly Results Available", "\n")
     }
    
 }else{
-    cat("    无拼接结果可供下载！", "\n")
+    cat("    No Assembly Results Available", "\n")
 }
 ```
 
-<br />  
+### About
+This is for research use only. It is not intended for any animal or human therapeutic or diagnostic use. 
 
-### 关于
-仅限研究使用。不适用于任何与动物或人类相关的治疗或诊断。 
 
-<br />  
+### Source
+<a download="report.Rmd" href="`r base64enc::dataURI(file = params$rmd, mime = 'text/rmd', encoding = 'base64')`">R Markdown source file (to produce this document)</a>

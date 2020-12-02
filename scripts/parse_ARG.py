@@ -60,6 +60,9 @@ def arg_table(deeparg_file, arg_pd, d_arg_avg_len):
     #2 drug class ARG的reads数
     drug_class_arg=arg_pd.loc[:, ['predicted_ARG-class','#ARG','counts']]
     arg_count=drug_class_arg.groupby(['predicted_ARG-class','#ARG'],as_index=False).sum()
+    if arg_count.empty:
+        final = pd.DataFrame(columns=['predicted_ARG-class','ARG','num_reads','covered_length','ARG_length','perc_covered','perc_identity'])
+        return final
 
     #3 计算cover、深度、相似度
     d_arg_cover={}
