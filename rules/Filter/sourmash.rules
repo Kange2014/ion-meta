@@ -101,21 +101,18 @@ rule sourmash_coverage:
             sourmash gather --threshold-bp 100 -o {params.csv2} -k 21 {input.sample2} {input.genome2}
         fi
         
-        if [ ! -e {params.csv1} ]; then
-            touch {params.csv1}
-            echo -e "intersect_bp,f_orig_query,f_match,f_unique_to_query,f_unique_weighted,average_abund,median_abund,std_abund,name,filename,md5" >> {params.csv1}
-            echo -e "0,0,0,0,0,0,0,0,NC_XXXXX,{output[0]},0" >> {params.csv1}
+        if [ ! -e {params.csv1} -a ! -e {params.csv2} ]; then
+            touch {output}
+            echo -e "intersect_bp,f_orig_query,f_match,f_unique_to_query,f_unique_weighted,average_abund,median_abund,std_abund,name,filename,md5" >> {output}
+            echo -e "0,0,0,0,0,0,0,0,NC_XXXXX,{output[0]},0" >> {output}
+        elif [ -e {params.csv1} -a  -e {params.csv2} ]; then
+            sed '1d' {params.csv2} >> {params.csv1}  
+            mv {params.csv1} {output}
+        elif [ -e {params.csv1} ]; then
+            mv {params.csv1} {output}
+        elif [ -e {params.csv2} ]; then
+            mv {params.csv2} {output}
         fi
-
-        if [ ! -e {params.csv2} ]; then
-            touch {params.csv2}
-            echo -e "intersect_bp,f_orig_query,f_match,f_unique_to_query,f_unique_weighted,average_abund,median_abund,std_abund,name,filename,md5" >> {params.csv2}
-            echo -e "0,0,0,0,0,0,0,0,NC_XXXXX,{output[0]},0" >> {params.csv2}
-        fi
-
-        sed '1d' {params.csv2} >> {params.csv1}  
-        mv {params.csv1} {output}
-
         """
 
 #rule collate_sourmash:

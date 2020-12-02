@@ -57,6 +57,7 @@ rule extract_centrifuge_sequences:
             shell("gzip -c {unzipped} > {output.fna}")
         else:
             shell("centrifuge-inspect {params.prefix} | gzip -c > {output.fna}")
+        
 
 rule extract_centrifuge_seqidmap:
     """Extracts sequence id to taxonomy idmapping from centrifuge database"""
@@ -179,7 +180,12 @@ rule parse_centrifuge_output:
                                --reportTaxalineage {output[0]} \
                                --taxidHitFolder {params.outdir} #\
                                #--host_taxid {params.host_taxid}
-        cat {params.outdir}/*txt > {output[1]}
+        files=$(ls {params.outdir}/*txt 2> /dev/null | wc -l)
+        if [ $files != 0 ] ; then
+            cat {params.outdir}/*txt > {output[1]}
+        else
+            touch {output[1]}
+        fi
         """
 
 ########################################################
